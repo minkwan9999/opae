@@ -21,6 +21,8 @@ DOMAIN = "opae.kr"
 GA_ID = "G-Q543DWEBBW"
 ADSENSE_CLIENT = "ca-pub-1957248819245044"  # 반드시 ca-pub- 로 시작
 CONTACT_FORM_URL = ""  # 구글폼 링크를 넣으면 문의 페이지에 버튼이 생김
+NAVER_VERIFY = "f8540d2140e4c6e55cce45bfc34e45ad827bb4c9"  # 네이버 서치어드바이저 소유 확인
+GOOGLE_VERIFY = ""  # 구글 서치콘솔 HTML 태그 인증을 쓸 때만 입력
 # ────────────────────────────────────────────────────
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -78,6 +80,11 @@ def layout(path, meta, body):
     ogd = meta.get("og_description", desc)
     url = SITE_URL + path
     noindex = '<meta name="robots" content="noindex">' if meta.get("noindex") else ""
+    verify = ""
+    if NAVER_VERIFY:
+        verify += f'<meta name="naver-site-verification" content="{NAVER_VERIFY}">'
+    if GOOGLE_VERIFY:
+        verify += f'<meta name="google-site-verification" content="{GOOGLE_VERIFY}">'
     e = html.escape
     return f"""<!DOCTYPE html>
 <html lang="ko">
@@ -93,6 +100,7 @@ def layout(path, meta, body):
   <meta property="og:title" content="{e(ogt)}">
   <meta property="og:description" content="{e(ogd)}">
   {noindex}
+  {verify}
   <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}gtag('js',new Date());gtag('config','{GA_ID}');</script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT}" crossorigin="anonymous"></script>
