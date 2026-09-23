@@ -20,7 +20,7 @@ SITE_NAME = "오패금융연구소"
 DOMAIN = "opae.kr"
 GA_ID = "G-Q543DWEBBW"
 ADSENSE_CLIENT = "ca-pub-1957248819245044"  # 반드시 ca-pub- 로 시작
-CONTACT_FORM_URL = ""  # 구글폼 링크를 넣으면 문의 페이지에 버튼이 생김
+CONTACT_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfINdHSM97Jn05XQp2uCRth2RIzM_aa36knb4_o6uJGJmRRTQ/viewform"  # 구글폼 링크를 넣으면 문의 페이지에 버튼이 생김
 NAVER_VERIFY = "f8540d2140e4c6e55cce45bfc34e45ad827bb4c9"  # 네이버 서치어드바이저 소유 확인
 GOOGLE_VERIFY = ""  # 구글 서치콘솔 HTML 태그 인증을 쓸 때만 입력
 # ────────────────────────────────────────────────────
