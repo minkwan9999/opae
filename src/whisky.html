@@ -1,0 +1,283 @@
+<!--
+title: 위스키·주류 해외직구 & 여행자 면세 세금 계산기
+description: 일본 여행, 해외직구 시 위스키와 와인 면세 한도(2L·$400, 병 수 제한 없음) 판정과 초과 시 관세, 주세, 교육세, 부가세를 자동 계산합니다.
+og_title: 위스키 면세 한도 & 해외직구 세금 최적화 계산기
+og_description: 위스키 3병 사면 세금 폭탄일까? 최적 면세 조합과 예상 납부 세액을 3초 만에 확인하세요.
+-->
+<main class="w-full max-w-lg bg-slate-800/90 backdrop-blur rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
+
+    <!-- 헤더 -->
+    <div class="border-b border-slate-700 pb-4 mb-5 text-center">
+      <span class="text-[11px] font-bold tracking-wider px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full">주류 관부가세 시뮬레이터</span>
+      <h1 class="text-xl font-extrabold mt-2.5 text-white">위스키 면세 & 세금 계산기</h1>
+      <p class="text-xs text-slate-400 mt-1">여행자 휴대품(2L·$400, 병 수 제한 없음) 면세 판정 및 직구 세금 계산</p>
+    </div>
+
+    <!-- 입력 폼 -->
+    <div class="space-y-4 text-sm">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">반입 경로</label>
+          <select id="importType" onchange="calculateTax()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-semibold focus:ring-2 focus:ring-amber-500 outline-none">
+            <option value="traveler" selected>여행자 휴대품 (입국)</option>
+            <option value="direct">해외 배송 직구 (배대지)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">주종 선택</label>
+          <select id="liquorType" onchange="calculateTax()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-semibold focus:ring-2 focus:ring-amber-500 outline-none">
+            <option value="whisky" selected>위스키 / 브랜디 (40도 이상)</option>
+            <option value="wine">와인 (발효주)</option>
+            <option value="sake">사케 / 청주</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 주류 상세 스펙 -->
+      <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/70 space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">구매 병 수</label>
+            <input type="number" id="bottleCount" value="1" min="1" max="10" oninput="calculateTax()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-semibold outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">병당 용량 (ml)</label>
+            <input type="number" id="bottleVolume" value="700" step="50" oninput="calculateTax()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-semibold outline-none focus:border-amber-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">병당 구매가 (통화 기준)</label>
+            <input type="number" id="bottlePrice" value="15000" step="500" oninput="calculateTax()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-semibold outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">통화 선택</label>
+            <select id="currency" onchange="calculateTax()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-semibold outline-none focus:border-amber-500">
+              <option value="JPY" selected>엔화 (JPY, ¥)</option>
+              <option value="USD">달러 (USD, $)</option>
+              <option value="KRW">원화 (KRW, ₩)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="text-[11px] text-slate-400 flex justify-between pt-1 border-t border-slate-800">
+          <span>적용 환율:</span>
+          <span id="fxRateText">100엔 = 900원 / 1달러 = 1,350원</span>
+        </div>
+      </div>
+
+      <button onclick="calculateTax()" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg transition active:scale-[0.98]">
+        세금 및 면세 판정 계산하기
+      </button>
+    </div>
+
+    <!-- 결과 영역 -->
+    <div id="resultArea" class="mt-6 border-t border-slate-700/80 pt-5 space-y-4">
+      
+      <!-- 최종 면세 판정 뱃지 -->
+      <div id="dutyBadge" class="p-4 rounded-xl text-center font-extrabold text-base border"></div>
+
+      <!-- 세금 요약 하이라이트 -->
+      <div class="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-xl p-4 text-center">
+        <p class="text-xs font-semibold text-slate-400">총 예상 납부 세액 (관세+주세+교육세+부가세)</p>
+        <p id="totalTaxHero" class="text-3xl font-black text-amber-400 mt-1">0원</p>
+        <p id="taxRatioSub" class="text-xs text-slate-400 mt-1">원가 대비 세금 비율: 0%</p>
+      </div>
+
+      <!-- 세부 내역 테이블 -->
+      <div class="bg-slate-900 rounded-xl border border-slate-700 p-3.5 text-xs space-y-2">
+        <div class="flex justify-between text-slate-400">
+          <span>총 물품 원가</span>
+          <span id="itemKrwCost" class="text-slate-200 font-semibold">-</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>관세</span>
+          <span id="customsDuty" class="text-slate-200 font-medium">-</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>주세</span>
+          <span id="liquorTax" class="text-slate-200 font-medium">-</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>교육세</span>
+          <span id="eduTax" class="text-slate-200 font-medium">-</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>부가가치세</span>
+          <span id="vatTax" class="text-slate-200 font-medium">-</span>
+        </div>
+        <div class="pt-2 border-t border-slate-800 flex justify-between font-bold text-sm text-amber-300">
+          <span>최종 취득 원가 (물품가 + 세금)</span>
+          <span id="finalTotalCost">-</span>
+        </div>
+      </div>
+
+      <!-- 공유 버튼 -->
+      <button onclick="copyWhiskySummary()" id="copyBtn" class="w-full py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 border border-slate-600">
+        📋 계산 결과 복사 (위스키 카페/단톡방 공유)
+      </button>
+    </div>
+
+    <!-- SEO FAQ 롱테일 알박기 섹션 -->
+    <section class="mt-8 pt-6 border-t border-slate-700 text-xs text-slate-300 space-y-3">
+      <h2 class="text-sm font-bold text-slate-100 mb-2">📌 위스키 면세 한도 & 주세법 FAQ</h2>
+
+      <details class="bg-slate-900/70 border border-slate-700/80 rounded-lg p-3 cursor-pointer">
+        <summary class="font-semibold text-slate-200">여행자 휴대품 주류 면세 기준(2L, $400)이란?</summary>
+        <p class="mt-2 text-slate-400 leading-relaxed">
+          2025년 3월부터 병 수 제한은 폐지되었고, 합산 용량 2,000ml(2L) 이하이면서 합산 금액 미화 400달러 이하인 두 조건을 동시에 충족해야 관세와 주세가 100% 면제됩니다. 둘 중 하나라도 초과하면, 두 조건을 동시에 만족하는 병 수까지만 면세되고 나머지 병에 대해서만 과세됩니다. 기본 여행자 면세 한도($800)와 별도로 추가 적용됩니다.
+        </p>
+      </details>
+
+      <details class="bg-slate-900/70 border border-slate-700/80 rounded-lg p-3 cursor-pointer">
+        <summary class="font-semibold text-slate-200">위스키 세금은 왜 원가의 1.5배 이상 나오나요?</summary>
+        <p class="mt-2 text-slate-400 leading-relaxed">
+          위스키는 종가세 방식으로 관세(20%)가 먼저 붙고, 물품가+관세 금액에 주세(72%), 주세에 교육세(30%), 마지막으로 전체 합계에 부가세(10%)가 복리로 누적되어 총 세부담률이 물품 가격의 약 156%에 달합니다.
+        </p>
+      </details>
+
+      <details class="bg-slate-900/70 border border-slate-700/80 rounded-lg p-3 cursor-pointer">
+        <summary class="font-semibold text-slate-200">여러 병 살 때 어떤 병을 면세로 빼야 유리한가요?</summary>
+        <p class="mt-2 text-slate-400 leading-relaxed">
+          병 수 제한이 없어졌으므로, 합산 용량 2L·합산 금액 $400을 동시에 넘지 않는 선까지는 몇 병이든 면세로 지정할 수 있습니다. 두 조건 중 하나라도 넘어서는 병이 생기면, 관세청은 세액이 최소가 되는 병(보통 가장 저렴한 병)부터 과세 대상으로 지정합니다.
+        </p>
+      </details>
+    </section>
+  </main>
+
+  <script>
+    const won = (n) => (Math.round(n)).toLocaleString('ko-KR') + '원';
+
+    // 환율 고정 기준치 (시뮬레이션 표준치)
+    const FX_JPY = 9.0;    // 1엔당 9원 (100엔당 900원)
+    const FX_USD = 1350.0; // 1달러당 1350원
+
+    let currentSummary = "";
+
+    function calculateTax() {
+      const importType = document.getElementById('importType').value;
+      const liquorType = document.getElementById('liquorType').value;
+      const count = parseInt(document.getElementById('bottleCount').value, 10) || 1;
+      const volume = parseFloat(document.getElementById('bottleVolume').value) || 0;
+      const price = parseFloat(document.getElementById('bottlePrice').value) || 0;
+      const curr = document.getElementById('currency').value;
+
+      // 원화 및 USD 환산
+      let krwPerUnit = price;
+      let usdPerUnit = price;
+
+      if (curr === 'JPY') {
+        krwPerUnit = price * (FX_JPY / 1.0);
+        usdPerUnit = krwPerUnit / FX_USD;
+      } else if (curr === 'USD') {
+        krwPerUnit = price * FX_USD;
+        usdPerUnit = price;
+      } else if (curr === 'KRW') {
+        krwPerUnit = price;
+        usdPerUnit = price / FX_USD;
+      }
+
+      const totalKrwCost = krwPerUnit * count;
+      const totalVolume = volume * count;
+      const totalUsdCost = usdPerUnit * count;
+
+      // 주종별 기본 세율 (관세, 주세, 교육세)
+      let rCustoms = 0.20; // 관세 20%
+      let rLiquor = 0.72;  // 주세 72%
+      let rEdu = 0.30;     // 교육세 30%
+
+      if (liquorType === 'wine') {
+        rCustoms = 0.15;
+        rLiquor = 0.30;
+        rEdu = 0.10;
+      } else if (liquorType === 'sake') {
+        rCustoms = 0.15;
+        rLiquor = 0.30;
+        rEdu = 0.10;
+      }
+
+      // 면세 여부 판정 (2025.3~ 병 수 제한 폐지: 총 용량 2000ml 이하 + 총 가격 $400 이하 두 조건만 적용)
+      // 조건 초과 시에도 전체가 과세되는 게 아니라, 두 조건을 동시에 만족하는 최대 병 수까지는 면세되고
+      // 나머지 병에 대해서만 과세됨 (관세청 확인: 세액이 최소가 되는 병부터 과세)
+      let exemptCount = count;
+      let taxableCount = 0;
+      let isExempt = true;
+
+      if (importType === 'traveler') {
+        const maxByVolume = volume > 0 ? Math.floor(2000 / volume) : count;
+        const maxByPrice = usdPerUnit > 0 ? Math.floor(400 / usdPerUnit) : count;
+        exemptCount = Math.min(count, maxByVolume, maxByPrice);
+        taxableCount = count - exemptCount;
+        isExempt = taxableCount === 0;
+      } else {
+        // 해외직구 등 여행자 휴대품이 아닌 경우 전량 과세
+        exemptCount = 0;
+        taxableCount = count;
+        isExempt = false;
+      }
+
+      const taxableKrwCost = krwPerUnit * taxableCount;
+
+      let customs = 0;
+      let liquorTax = 0;
+      let eduTax = 0;
+      let vat = 0;
+      let totalTax = 0;
+
+      if (!isExempt) {
+        // 복리 종가세 계산 공식 (과세 대상 병 수분에 대해서만 적용)
+        customs = taxableKrwCost * rCustoms;
+        liquorTax = (taxableKrwCost + customs) * rLiquor;
+        eduTax = liquorTax * rEdu;
+        vat = (taxableKrwCost + customs + liquorTax + eduTax) * 0.10;
+        totalTax = customs + liquorTax + eduTax + vat;
+      }
+
+      const finalCost = totalKrwCost + totalTax;
+      const taxRatio = taxableKrwCost > 0 ? (totalTax / taxableKrwCost) * 100 : 0;
+
+      // 화면 반영
+      const badge = document.getElementById('dutyBadge');
+      if (isExempt) {
+        badge.className = 'p-4 rounded-xl text-center font-extrabold text-base border bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+        badge.innerHTML = `🎉 100% 면세 통과 (납부 세금 0원)`;
+      } else if (importType === 'traveler' && exemptCount > 0) {
+        badge.className = 'p-4 rounded-xl text-center font-extrabold text-base border bg-amber-500/20 text-amber-300 border-amber-500/40';
+        badge.innerHTML = `🔶 부분 면세 (${exemptCount}병 면세 + ${taxableCount}병 과세)`;
+      } else {
+        badge.className = 'p-4 rounded-xl text-center font-extrabold text-base border bg-rose-500/20 text-rose-300 border-rose-500/40';
+        badge.innerHTML = `⚠️ 과세 대상 (총 ${count}병 / ${(totalVolume/1000).toFixed(1)}L / $${Math.round(totalUsdCost)})`;
+      }
+
+      document.getElementById('totalTaxHero').innerText = won(totalTax);
+      document.getElementById('taxRatioSub').innerText = isExempt ? "면세 조건 충족 (총 2L·$400 이내, 병 수 제한 없음)" : `과세 대상 ${taxableCount}병 기준 세율 약 ${taxRatio.toFixed(1)}%`;
+      document.getElementById('itemKrwCost').innerText = won(totalKrwCost);
+      document.getElementById('customsDuty').innerText = won(customs);
+      document.getElementById('liquorTax').innerText = won(liquorTax);
+      document.getElementById('eduTax').innerText = won(eduTax);
+      document.getElementById('vatTax').innerText = won(vat);
+      document.getElementById('finalTotalCost').innerText = won(finalCost);
+
+      currentSummary = `[위스키/주류 세금 계산 결과]
+- 구분: ${importType === 'traveler' ? '여행자 입국 휴대품' : '해외직구 배송'}
+- 수량/용량: ${count}병 (총 ${totalVolume}ml)
+- 물품 원가: ${won(totalKrwCost)} ($${Math.round(totalUsdCost)})
+- 예상 납부 세액: ${won(totalTax)} (관부가세 합산)
+- 최종 취득 원가: ${won(finalCost)}
+👉 판정: ${isExempt ? '완전 면세' : (exemptCount > 0 ? `부분 면세 (${exemptCount}병 면세 + ${taxableCount}병 과세, 세율 약 ${taxRatio.toFixed(1)}%)` : '전량 과세 (세율 약 ' + taxRatio.toFixed(1) + '%)')}
+https://opae.kr/whisky/`;
+    }
+
+    function copyWhiskySummary() {
+      if (!currentSummary) calculateTax();
+      navigator.clipboard.writeText(currentSummary).then(() => {
+        const btn = document.getElementById('copyBtn');
+        const orig = btn.innerText;
+        btn.innerText = '✅ 복사 완료! 위스키 커뮤니티에 공유하세요';
+        setTimeout(() => { btn.innerText = orig; }, 2000);
+      });
+    }
+
+    calculateTax();
+  </script>

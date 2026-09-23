@@ -1,0 +1,36 @@
+<!--
+title: 오패금융연구소 - 실전 절세·재테크 계산기
+description: 대출 상환, 위스키 관세, 퇴직금 절세, ISA 만기 전환까지. 증권사·포털이 안 알려주는 실질 손익을 숫자로 검증하는 무료 계산기 모음.
+og_title: 오패금융연구소 - 숫자로 검증하는 실전 절세 계산기
+og_description: 증권사·포털이 안 알려주는 실질 손익을 직접 계산해보세요.
+-->
+  <main class="w-full max-w-lg space-y-6 my-3">
+    <header class="text-center space-y-2 pt-2">
+      <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">숫자로 검증하는 실전 절세 계산기</h1>
+      <p class="text-xs sm:text-sm text-slate-400">증권사·포털이 안 알려주는 실질 손익을 직접 계산해보세요</p>
+    </header>
+
+    <section id="calculators" class="space-y-3">
+      <div class="flex items-center justify-between px-1">
+        <span class="text-xs font-bold text-slate-400">계산기</span>
+        <span class="text-[11px] text-blue-400 font-mono">Free Tools</span>
+      </div>
+{{CALCULATOR_CARDS}}
+    </section>
+
+    <section class="p-4 rounded-2xl bg-[#161b22] border border-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-slate-400">최신 가이드</span>
+        <a href="/guide/" class="text-[11px] text-blue-400 hover:underline">전체 보기 →</a>
+      </div>
+      <ul class="mt-2 space-y-1.5 text-sm text-slate-200 list-disc pl-5">
+{{GUIDE_LIST}}
+      </ul>
+    </section>
+
+    <section class="p-4 rounded-2xl bg-[#161b22] border border-slate-800 text-sm text-slate-300 leading-relaxed">
+      <h2 class="text-sm font-bold text-white">이 사이트는 이렇게 만듭니다</h2>
+      <p class="mt-2">모든 계산기는 국세청·관세청 등 공식 기관이 공개한 계산 구조를 그대로 옮기고, 어떤 기준으로 계산했는지 페이지마다 밝힙니다. 세법이나 요율이 바뀌면 수정하고 <a href="/changelog/" class="text-blue-400 underline">업데이트 내역</a>에 기록합니다.</p>
+      <p class="mt-2">입력한 숫자는 서버로 전송되지 않고 내 브라우저 안에서만 계산됩니다. 더 자세한 내용은 <a href="/about/" class="text-blue-400 underline">소개</a>를 참고하세요.</p>
+    </section>
+  </main>

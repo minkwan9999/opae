@@ -1,0 +1,202 @@
+<!--
+title: 대출 중도상환 vs 주식·배당 투자 수익률 격돌 계산기
+description: 목돈이 생겼을 때 대출 상환이 이득일까 주식 투자가 이득일까? 세후 실질 수익과 손익분기 수익률을 비교합니다.
+og_title: 대출 갚을까? 주식 살까? 중도상환 vs 투자 시뮬레이터
+og_description: 확정 대출이자 절감액 vs 세후 투자 수익 비교. 내 손익분기 수익률을 3초 만에 계산해 보세요.
+-->
+<main class="w-full max-w-lg bg-slate-800/90 backdrop-blur rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
+
+    <!-- 헤더 -->
+    <div class="border-b border-slate-700 pb-4 mb-5 text-center">
+      <span class="text-[11px] font-bold tracking-wider px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full">40대 자산 최적화 시뮬레이터</span>
+      <h1 class="text-xl font-extrabold mt-2.5 text-white">대출 상환 vs 주식 투자 격돌</h1>
+      <p class="text-xs text-slate-400 mt-1">목돈이 생겼을 때, 빚 갚기 vs 투자 중 진짜 남는 장사는?</p>
+    </div>
+
+    <!-- 입력 폼 -->
+    <div class="space-y-3.5 text-sm">
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">고민 중인 목돈 (원)</label>
+        <input type="number" id="lumpSum" value="30000000" step="1000000" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+        <span id="lumpSumText" class="text-xs text-blue-400 font-medium mt-1.5 block">3,000만 원</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">현재 대출 금리 (%)</label>
+          <input type="number" id="loanRate" value="4.2" step="0.1" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">비교 기간 (년)</label>
+          <select id="years" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+            <option value="3">3년</option>
+            <option value="5" selected>5년</option>
+            <option value="10">10년</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">목표 투자 수익률 (연 %)</label>
+          <input type="number" id="investRate" value="7.0" step="0.5" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">투자 대상 세금</label>
+          <select id="taxType" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+            <option value="dividend">배당소득세 (15.4%)</option>
+            <option value="us_stock">미국주식 (22%)</option>
+            <option value="isa">ISA 비과세 (0%)</option>
+          </select>
+        </div>
+      </div>
+
+      <button onclick="calculate()" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition active:scale-[0.98]">
+        격돌 결과 계산하기
+      </button>
+    </div>
+
+    <!-- 결과 대시보드 -->
+    <div id="resultArea" class="mt-6 border-t border-slate-700/80 pt-5 space-y-4">
+      
+      <!-- 최종 우세 뱃지 -->
+      <div id="summaryBadge" class="p-4 rounded-xl text-center font-extrabold text-lg shadow-inner"></div>
+
+      <!-- 손익분기점 하이라이트 배너 -->
+      <div class="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4 text-center">
+        <p class="text-xs font-semibold text-amber-400 tracking-wider">⚡ 투자 손익분기선 (Break-Even Rate)</p>
+        <p id="breakEvenHero" class="text-3xl font-black text-amber-300 mt-1">-</p>
+        <p class="text-[11px] text-amber-400/80 mt-1">이 수익률을 밑돌면 빚 갚는 쪽이 무조건 돈을 벌게 됩니다.</p>
+      </div>
+
+      <!-- 비교 비주얼 게이지 차트 -->
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400 font-medium">대출 상환 이자 절감</span>
+            <span id="savedInterest" class="text-slate-200 font-bold">-</span>
+          </div>
+          <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+            <div id="barLoan" class="bg-slate-400 h-3 rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400 font-medium">투자 세후 실질 순이익</span>
+            <span id="netProfit" class="text-emerald-400 font-bold">-</span>
+          </div>
+          <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+            <div id="barInvest" class="bg-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 공유용 텍스트 복사 버튼 -->
+      <button onclick="copyResultSummary()" id="copyBtn" class="w-full py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 border border-slate-600">
+        📋 결과 텍스트 복사 (스레드/단톡 공유)
+      </button>
+    </div>
+
+    <!-- SEO 롱테일 알박기용 FAQ 섹션 -->
+    <section class="mt-8 pt-6 border-t border-slate-700 text-xs text-slate-300 space-y-3">
+      <h2 class="text-sm font-bold text-slate-100 mb-2">💡 자주 묻는 질문 및 절세 기준 (FAQ)</h2>
+      
+      <details class="bg-slate-900/70 border border-slate-700/80 rounded-lg p-3 cursor-pointer">
+        <summary class="font-semibold text-slate-200">대출 이자 절감은 왜 '확정 세후 수익'인가요?</summary>
+        <p class="mt-2 text-slate-400 leading-relaxed">
+          대출 상환으로 아끼는 이자는 세금을 원천징수하지 않는 100% 비과세 확정 수익과 같습니다. 반면 주식이나 ETF 투자는 배당소득세(15.4%) 또는 해외주식 양도소득세(22%)가 차감되므로 단순 금리 비교 시 착시가 발생합니다.
+        </p>
+      </details>
+
+      <details class="bg-slate-900/70 border border-slate-700/80 rounded-lg p-3 cursor-pointer">
+        <summary class="font-semibold text-slate-200">투자 손익분기 수익률(Break-Even)의 계산 원리는?</summary>
+        <p class="mt-2 text-slate-400 leading-relaxed">
+          대출금리를 (1 − 세율)로 나눈 값입니다. 예를 들어 대출금리가 4.2%이고 배당세 15.4%가 적용된다면, 투자로 약 4.96%(=4.2÷(1−0.154)) 이상의 수익을 매년 안정적으로 내야 상환보다 유리해집니다.
+        </p>
+      </details>
+
+      <details class="bg-slate-900/70 border border-slate-700/80 rounded-lg p-3 cursor-pointer">
+        <summary class="font-semibold text-slate-200">중도상환수수료는 고려해야 하나요?</summary>
+        <p class="mt-2 text-slate-400 leading-relaxed">
+          대출 실행 후 3년이 경과했다면 통상 중도상환수수료가 면제됩니다. 만약 3년 이내라면 약 0.5%~1.2% 수준의 슬라이딩 감면 수수료가 발생하므로 상환 이익에서 이를 차감해야 합니다.
+        </p>
+      </details>
+    </section>
+  </main>
+
+  <script>
+    const won = (n) => (Math.round(n)).toLocaleString('ko-KR') + '원';
+
+    document.getElementById('lumpSum').addEventListener('input', (e) => {
+      const v = Number(e.target.value) || 0;
+      document.getElementById('lumpSumText').innerText = (v / 10000).toLocaleString('ko-KR') + '만 원';
+    });
+
+    let currentSummaryText = "";
+
+    function calculate() {
+      const lump = parseFloat(document.getElementById('lumpSum').value) || 0;
+      const loanR = (parseFloat(document.getElementById('loanRate').value) || 0) / 100;
+      const invR = (parseFloat(document.getElementById('investRate').value) || 0) / 100;
+      const years = parseInt(document.getElementById('years').value, 10);
+      const taxType = document.getElementById('taxType').value;
+
+      let taxRate = 0.154;
+      let taxLabel = "배당세 15.4%";
+      if (taxType === 'us_stock') { taxRate = 0.22; taxLabel = "양도세 22%"; }
+      if (taxType === 'isa') { taxRate = 0.0; taxLabel = "비과세 0%"; }
+
+      const savedInterestVal = lump * (Math.pow(1 + loanR, years) - 1);
+      const grossFuture = lump * Math.pow(1 + invR, years);
+      const grossProfit = grossFuture - lump;
+      const netProfitVal = grossProfit * (1 - taxRate);
+
+      const diff = netProfitVal - savedInterestVal;
+      const breakEvenRate = (loanR / (1 - taxRate)) * 100;
+
+      document.getElementById('savedInterest').innerText = won(savedInterestVal);
+      document.getElementById('netProfit').innerText = won(netProfitVal);
+      document.getElementById('breakEvenHero').innerText = `최소 연 ${breakEvenRate.toFixed(2)}% 이상`;
+
+      const maxVal = Math.max(savedInterestVal, netProfitVal, 1);
+      const loanWidth = Math.min(100, Math.max(10, (savedInterestVal / maxVal) * 100));
+      const investWidth = Math.min(100, Math.max(10, (netProfitVal / maxVal) * 100));
+
+      document.getElementById('barLoan').style.width = `${loanWidth}%`;
+      document.getElementById('barInvest').style.width = `${investWidth}%`;
+
+      const badge = document.getElementById('summaryBadge');
+      let winText = "";
+      if (diff > 0) {
+        badge.className = 'p-4 rounded-xl text-center font-extrabold text-base bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        badge.innerHTML = `🚀 투자가 <span class="text-white underline underline-offset-4 decoration-emerald-400">${won(diff)}</span> 더 앞섭니다`;
+        winText = `투자 우세 (+${won(diff)})`;
+      } else {
+        badge.className = 'p-4 rounded-xl text-center font-extrabold text-base bg-rose-500/20 text-rose-300 border border-rose-500/40';
+        badge.innerHTML = `🛡️ 대출 상환이 <span class="text-white underline underline-offset-4 decoration-rose-400">${won(Math.abs(diff))}</span> 더 안전합니다`;
+        winText = `상환 우세 (+${won(Math.abs(diff))})`;
+      }
+
+      currentSummaryText = `[대출 상환 vs 투자 격돌 결과]
+- 목돈: ${(lump/10000).toLocaleString()}만 원 (${years}년 기준)
+- 대출금리: ${(loanR*100).toFixed(1)}% vs 투자목표: ${(invR*100).toFixed(1)}% (${taxLabel})
+- 아낀 이자: ${won(savedInterestVal)}
+- 투자 세후 실수령: ${won(netProfitVal)}
+- 손익분기: 최소 연 ${breakEvenRate.toFixed(2)}% 이상 수익 내야 본전
+👉 최종 판정: ${winText}
+https://opae.kr/loan/`;
+    }
+
+    function copyResultSummary() {
+      if (!currentSummaryText) calculate();
+      navigator.clipboard.writeText(currentSummaryText).then(() => {
+        const btn = document.getElementById('copyBtn');
+        const orig = btn.innerText;
+        btn.innerText = '✅ 복사 완료! 원하는 곳에 붙여넣으세요';
+        setTimeout(() => { btn.innerText = orig; }, 2000);
+      });
+    }
+
+    calculate();
+  </script>
