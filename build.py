@@ -28,7 +28,8 @@ GOOGLE_VERIFY = ""  # 구글 서치콘솔 HTML 태그 인증을 쓸 때만 입�
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "src")
 OUT = os.path.join(ROOT, "_site")
-TODAY = datetime.date.today().isoformat()
+# 한국 시간 기준 오늘 날짜 (예약 발행 판단에 사용)
+TODAY = (datetime.datetime.utcnow() + datetime.timedelta(hours=9)).date().isoformat()
 
 # 계산기 목록: 홈 화면 카드 순서 = 이 순서
 CALCULATORS = [
@@ -99,6 +100,11 @@ def layout(path, meta, body):
   <meta property="og:url" content="{url}">
   <meta property="og:title" content="{e(ogt)}">
   <meta property="og:description" content="{e(ogd)}">
+  <meta property="og:image" content="{SITE_URL}/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   {noindex}
   {verify}
   <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
@@ -106,6 +112,7 @@ def layout(path, meta, body):
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT}" crossorigin="anonymous"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    body{{word-break:keep-all;overflow-wrap:anywhere}}
     input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{{-webkit-appearance:none;margin:0}}
     .prose-opae h2{{font-size:1.05rem;font-weight:800;color:#fff;margin:1.4em 0 .5em}}
     .prose-opae h3{{font-weight:700;color:#e2e8f0;margin:1.2em 0 .4em}}
@@ -116,11 +123,12 @@ def layout(path, meta, body):
     .prose-opae a{{color:#60a5fa;text-decoration:underline}}
     .prose-opae table{{width:100%;font-size:.8rem;margin:.8em 0;border-collapse:collapse}}
     .prose-opae th,.prose-opae td{{border:1px solid #334155;padding:.4em .5em;color:#cbd5e1}}
+    .prose-opae blockquote{{border-left:3px solid #f59e0b;background:#f59e0b14;padding:.5em .8em;margin:.8em 0;border-radius:.4em}}
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 antialiased min-h-screen p-4 flex flex-col items-center">
   <nav class="w-full max-w-lg flex items-center justify-between text-xs text-slate-400 py-1">
-    <a href="/" class="font-bold text-slate-200 hover:text-white">📊 {SITE_NAME}</a>
+    <a href="/" class="flex items-center gap-1.5 font-bold text-slate-200 hover:text-white"><img src="/logo.svg" alt="" width="20" height="20" class="rounded-md">{SITE_NAME}</a>
     <span class="space-x-3"><a href="/#calculators" class="hover:text-white">계산기</a><a href="/guide/" class="hover:text-white">가이드</a></span>
   </nav>
 {body}
@@ -156,7 +164,7 @@ def load_guides():
             continue
         meta, lines, body_start = {}, chunk.splitlines(), 0
         for i, line in enumerate(lines):
-            m = re.match(r"^(title|slug|date|description|calc|draft):\s*(.*)$", line)
+            m = re.match(r"^(title|slug|date|description|calc|draft|tags):\s*(.*)$", line)
             if m:
                 meta[m.group(1)] = m.group(2).strip()
             elif line.strip():
@@ -164,10 +172,33 @@ def load_guides():
                 break
         if meta.get("draft", "").lower() in ("yes", "true", "1") or "slug" not in meta:
             continue
+        if meta.get("date", "") > TODAY:  # 예약 발행: 날짜가 오면 자동 공개
+            continue
         meta["body"] = "\n".join(lines[body_start:])
+        meta["tags"] = [t.strip() for t in meta.get("tags", "").split(",") if t.strip()]
         guides.append(meta)
     guides.sort(key=lambda g: g.get("date", ""), reverse=True)
     return guides
+
+
+def related(guides, tags, calc_path="", exclude="", limit=3):
+    """태그가 겹치거나 같은 계산기를 가리키는 가이드를 골라준다."""
+    scored = []
+    for g in guides:
+        if g["slug"] == exclude:
+            continue
+        score = len(set(tags) & set(g["tags"])) + (2 if calc_path and g.get("calc") == calc_path else 0)
+        if score:
+            scored.append((score, g.get("date", ""), g))
+    scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    return [g for _, _, g in scored[:limit]]
+
+
+def related_html(items, heading="함께 보면 좋은 글"):
+    if not items:
+        return ""
+    lis = "".join(f'<li><a href="/guide/{g["slug"]}/" class="text-blue-300 hover:underline">{html.escape(g["title"])}</a></li>' for g in items)
+    return f'<section class="mt-6 pt-4 border-t border-slate-700"><h2 class="text-sm font-bold text-white">{heading}</h2><ul class="mt-2 space-y-1.5 text-sm list-disc pl-5">{lis}</ul></section>'
 
 
 def md(text):
@@ -179,6 +210,12 @@ def build():
     os.makedirs(OUT)
     urls = []
     guides = load_guides()
+
+    # 0) static/ 폴더(로고·아이콘·공유 이미지)는 그대로 복사
+    static = os.path.join(ROOT, "static")
+    if os.path.isdir(static):
+        for f in os.listdir(static):
+            shutil.copy(os.path.join(static, f), os.path.join(OUT, f))
 
     # 1) src/*.html 페이지
     for name in sorted(os.listdir(SRC)):
@@ -196,6 +233,11 @@ def build():
                     .replace("{{CONTACT_FORM_URL}}", CONTACT_FORM_URL))
         if slug == "contact" and not CONTACT_FORM_URL:
             body = re.sub(r"<!--FORM-->.*?<!--/FORM-->", '<p class="text-sm text-slate-400">문의 양식을 준비 중입니다.</p>', body, flags=re.S)
+        tags = [t.strip() for t in meta.get("tags", "").split(",") if t.strip()]
+        if tags:
+            rel = related_html(related(guides, tags, calc_path=path), "이 계산기와 관련된 가이드")
+            if rel:
+                body += f'\n  <div class="w-full max-w-lg bg-slate-800/90 rounded-2xl border border-slate-700 p-5 -mt-1 mb-3">{rel.replace("mt-6 pt-4 border-t border-slate-700", "")}</div>'
         write(("" if slug == "index" else slug + "/") + "index.html", layout(path, meta, body))
         if slug != "404" and not meta.get("noindex"):
             urls.append(path)
@@ -214,6 +256,7 @@ def build():
     <h1 class="text-xl font-extrabold text-white mt-1">{html.escape(g['title'])}</h1>
     <article class="prose-opae mt-4">{md(g['body'])}</article>
     {calc}
+    {related_html(related(guides, g["tags"], calc_path=g.get("calc", ""), exclude=g["slug"]))}
   </main>"""
         p = f"/guide/{g['slug']}/"
         write(f"guide/{g['slug']}/index.html", layout(p, {"title": f"{g['title']} | {SITE_NAME}", "description": g.get("description", "")}, body))
