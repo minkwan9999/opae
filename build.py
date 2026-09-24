@@ -33,6 +33,7 @@ TODAY = (datetime.datetime.utcnow() + datetime.timedelta(hours=9)).date().isofor
 
 # 계산기 목록: 홈 화면 카드 순서 = 이 순서
 CALCULATORS = [
+    ("leave-tax", "🍼", "휴직한 해 연말정산 계산기", "육아휴직·무급휴직 환급 예상 + IRP 헛방 체크 + 부부 공제 배분"),
     ("loan", "💰", "대출 상환 vs 투자 계산기", "원리금 조기상환 vs 미국주식·배당 투자 손익분기 역산"),
     ("whisky", "🥃", "위스키·주류 세금 계산기", "면세 범위 자동 판정 & 해외 직구 예상 관부가세 역산"),
     ("retire", "🛡️", "퇴직금 절세 비교기", "퇴직금 IRP 이전 vs 일시 수령 실질 수령액 및 절세율 비교"),
