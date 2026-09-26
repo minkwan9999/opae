@@ -133,4 +133,163 @@ def layout(path, meta, body):
     <span class="space-x-3"><a href="/#calculators" class="hover:text-white">계산기</a><a href="/guide/" class="hover:text-white">가이드</a></span>
   </nav>
 {body}
-  <footer class="w-full max-w-lg pt-6 pb-4 text-center text-xs text-slate-500
+  <footer class="w-full max-w-lg pt-6 pb-4 text-center text-xs text-slate-500 space-y-2">
+    <p class="space-x-3"><a href="/about/" class="hover:text-slate-300">소개</a><a href="/contact/" class="hover:text-slate-300">문의</a><a href="/privacy/" class="hover:text-slate-300">개인정보처리방침</a><a href="/changelog/" class="hover:text-slate-300">업데이트 내역</a></p>
+    <p><a href="https://minkwan9999.github.io" class="hover:text-slate-300">만든이의 다른 프로젝트 보기 →</a></p>
+    <p>계산 결과는 참고용이며 법률·세무 자문이 아닙니다.</p>
+    <p>© {TODAY[:4]} {SITE_NAME} · {VERSION}</p>
+  </footer>
+</body>
+</html>
+"""
+
+
+def card(href, icon, name, sub):
+    return f"""      <a href="{href}" class="block p-4 rounded-2xl bg-[#161b22] border border-slate-800 hover:border-blue-500/60 transition group shadow-md">
+        <div class="flex items-center justify-between"><div class="flex items-center gap-3">
+          <span class="text-2xl p-2 rounded-xl bg-slate-900 border border-slate-800">{icon}</span>
+          <div><h2 class="text-sm font-bold text-white group-hover:text-blue-400 transition">{html.escape(name)}</h2>
+          <p class="text-xs text-slate-400">{html.escape(sub)}</p></div></div>
+          <span class="text-slate-600 group-hover:text-blue-400 transition text-sm font-bold">→</span></div>
+      </a>"""
+
+
+def load_guides():
+    """guides.md를 '====='(5개 이상) 줄로 나눠 글 목록으로 만든다."""
+    path = os.path.join(ROOT, "guides.md")
+    if not os.path.exists(path):
+        return []
+    guides = []
+    for chunk in re.split(r"^={5,}\s*$", read(path), flags=re.M):
+        chunk = chunk.strip()
+        if not chunk or chunk.startswith("<!--"):
+            continue
+        meta, lines, body_start = {}, chunk.splitlines(), 0
+        for i, line in enumerate(lines):
+            m = re.match(r"^(title|slug|date|description|calc|draft|tags):\s*(.*)$", line)
+            if m:
+                meta[m.group(1)] = m.group(2).strip()
+            elif line.strip():
+                body_start = i
+                break
+        if meta.get("draft", "").lower() in ("yes", "true", "1") or "slug" not in meta:
+            continue
+        if meta.get("date", "") > TODAY:  # 예약 발행: 날짜가 오면 자동 공개
+            continue
+        meta["body"] = "\n".join(lines[body_start:])
+        meta["tags"] = [t.strip() for t in meta.get("tags", "").split(",") if t.strip()]
+        guides.append(meta)
+    guides.sort(key=lambda g: g.get("date", ""), reverse=True)
+    return guides
+
+
+def related(guides, tags, calc_path="", exclude="", limit=3):
+    """태그가 겹치거나 같은 계산기를 가리키는 가이드를 골라준다."""
+    scored = []
+    for g in guides:
+        if g["slug"] == exclude:
+            continue
+        score = len(set(tags) & set(g["tags"])) + (2 if calc_path and g.get("calc") == calc_path else 0)
+        if score:
+            scored.append((score, g.get("date", ""), g))
+    scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    return [g for _, _, g in scored[:limit]]
+
+
+def related_html(items, heading="함께 보면 좋은 글"):
+    if not items:
+        return ""
+    lis = "".join(f'<li><a href="/guide/{g["slug"]}/" class="text-blue-300 hover:underline">{html.escape(g["title"])}</a></li>' for g in items)
+    return f'<section class="mt-6 pt-4 border-t border-slate-700"><h2 class="text-sm font-bold text-white">{heading}</h2><ul class="mt-2 space-y-1.5 text-sm list-disc pl-5">{lis}</ul></section>'
+
+
+def md(text):
+    return markdown.markdown(text, extensions=["tables"])
+
+
+def build():
+    shutil.rmtree(OUT, ignore_errors=True)
+    os.makedirs(OUT)
+    urls = []
+    guides = load_guides()
+
+    # 0) static/ 폴더(로고·아이콘·공유 이미지)는 그대로 복사
+    static = os.path.join(ROOT, "static")
+    if os.path.isdir(static):
+        for f in os.listdir(static):
+            shutil.copy(os.path.join(static, f), os.path.join(OUT, f))
+
+    # 1) src/*.html 페이지
+    for name in sorted(os.listdir(SRC)):
+        if not name.endswith(".html"):
+            continue
+        slug = name[:-5]
+        meta, body = parse_front(read(os.path.join(SRC, name)))
+        path = "/" if slug == "index" else f"/{slug}/"
+        cards = "\n".join(card(f"/{s}/", i, n, d) for s, i, n, d in CALCULATORS)
+        glist = "\n".join(
+            f'<li><a href="/guide/{g["slug"]}/" class="hover:text-blue-400">{html.escape(g["title"])}</a></li>'
+            for g in guides[:5]) or '<li class="text-slate-500">가이드 글 준비 중입니다.</li>'
+        body = (body.replace("{{CALCULATOR_CARDS}}", cards)
+                    .replace("{{GUIDE_LIST}}", glist)
+                    .replace("{{CONTACT_FORM_URL}}", CONTACT_FORM_URL))
+        if slug == "contact" and not CONTACT_FORM_URL:
+            body = re.sub(r"<!--FORM-->.*?<!--/FORM-->", '<p class="text-sm text-slate-400">문의 양식을 준비 중입니다.</p>', body, flags=re.S)
+        tags = [t.strip() for t in meta.get("tags", "").split(",") if t.strip()]
+        if tags:
+            rel = related_html(related(guides, tags, calc_path=path), "이 계산기와 관련된 가이드")
+            if rel:
+                body += f'\n  <div class="w-full max-w-lg bg-slate-800/90 rounded-2xl border border-slate-700 p-5 -mt-1 mb-3">{rel.replace("mt-6 pt-4 border-t border-slate-700", "")}</div>'
+        write(("" if slug == "index" else slug + "/") + "index.html", layout(path, meta, body))
+        if slug != "404" and not meta.get("noindex"):
+            urls.append(path)
+    if os.path.exists(os.path.join(OUT, "404", "index.html")):
+        shutil.move(os.path.join(OUT, "404", "index.html"), os.path.join(OUT, "404.html"))
+        os.rmdir(os.path.join(OUT, "404"))
+
+    # 2) 가이드 글
+    items = []
+    for g in guides:
+        calc = ""
+        if g.get("calc"):
+            calc = f'<a href="{g["calc"]}" class="block mt-6 p-3 rounded-xl bg-blue-600/20 border border-blue-500/40 text-center text-sm font-bold text-blue-300 hover:bg-blue-600/30">→ 계산기로 바로 계산해보기</a>'
+        body = f"""  <main class="w-full max-w-lg bg-slate-800/90 rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
+    <p class="text-xs text-slate-500"><a href="/guide/" class="hover:text-slate-300">가이드</a> · {g.get('date', '')}</p>
+    <h1 class="text-xl font-extrabold text-white mt-1">{html.escape(g['title'])}</h1>
+    <article class="prose-opae mt-4">{md(g['body'])}</article>
+    {calc}
+    {related_html(related(guides, g["tags"], calc_path=g.get("calc", ""), exclude=g["slug"]))}
+  </main>"""
+        p = f"/guide/{g['slug']}/"
+        write(f"guide/{g['slug']}/index.html", layout(p, {"title": f"{g['title']} | {SITE_NAME}", "description": g.get("description", "")}, body))
+        urls.append(p)
+        items.append(f'<li class="py-2 border-b border-slate-700"><a href="{p}" class="text-sm font-bold text-white hover:text-blue-400">{html.escape(g["title"])}</a><p class="text-xs text-slate-400">{html.escape(g.get("description", ""))}</p></li>')
+    body = f"""  <main class="w-full max-w-lg bg-slate-800/90 rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
+    <h1 class="text-xl font-extrabold text-white">가이드</h1>
+    <p class="text-xs text-slate-400 mt-1">계산기 뒤에 있는 원리와 실제 사례를 정리합니다.</p>
+    <ul class="mt-4">{''.join(items) or '<li class="text-sm text-slate-500">가이드 글 준비 중입니다.</li>'}</ul>
+  </main>"""
+    write("guide/index.html", layout("/guide/", {"title": f"가이드 | {SITE_NAME}", "description": "절세·재테크·급여 계산의 원리와 실제 사례를 정리한 가이드 모음"}, body))
+    urls.append("/guide/")
+
+    # 3) 업데이트 내역 (첫 줄 제목은 빼고 렌더링)
+    log = md(read(os.path.join(ROOT, "CHANGELOG.md")).split("\n", 1)[1])
+    body = f"""  <main class="w-full max-w-lg bg-slate-800/90 rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
+    <h1 class="text-xl font-extrabold text-white">업데이트 내역</h1>
+    <article class="prose-opae mt-2">{log}</article>
+  </main>"""
+    write("changelog/index.html", layout("/changelog/", {"title": f"업데이트 내역 | {SITE_NAME}", "description": f"{SITE_NAME} 계산기 수정·추가 기록"}, body))
+    urls.append("/changelog/")
+
+    # 4) 검색엔진·광고용 파일
+    sm = "\n".join(f"  <url><loc>{SITE_URL}{u}</loc><lastmod>{TODAY}</lastmod></url>" for u in urls)
+    write("sitemap.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{sm}\n</urlset>\n')
+    write("robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n")
+    write("ads.txt", f"google.com, {ADSENSE_CLIENT.replace('ca-', '')}, DIRECT, f08c47fec0942fa0\n")
+    write("CNAME", DOMAIN + "\n")
+    write(".nojekyll", "")
+    print(f"built {VERSION}: {len(urls)} pages -> _site/")
+
+
+if __name__ == "__main__":
+    build()
