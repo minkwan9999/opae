@@ -1,0 +1,122 @@
+<!--
+title: 로또 당첨금 실수령액 계산기 (복권 당첨금 세금 계산)
+description: 로또·복권 당첨금에서 원천징수되는 소득세를 자동 계산해 실제 받는 금액을 보여줍니다. 200만원 이하는 비과세, 3억원을 기준으로 22%·33% 구간별 세율이 적용됩니다.
+og_title: 로또 당첨되면 세금 얼마 떼고 얼마 받을까?
+og_description: 3억원까지 22%, 초과분은 33%. 당첨금 넣으면 실수령액 바로 계산.
+tags: 세금, 로또, 복권
+-->
+<main class="w-full max-w-lg bg-slate-800/90 backdrop-blur rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
+
+    <div class="border-b border-slate-700 pb-4 mb-5 text-center">
+      <span class="text-[11px] font-bold tracking-wider px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full">복권 당첨금 원천징수</span>
+      <h1 class="text-xl font-extrabold mt-2.5 text-white">로또 당첨금 실수령액 계산기</h1>
+      <p class="text-xs text-slate-400 mt-1">세금 얼마 떼고 실제로 얼마 받을까</p>
+    </div>
+
+    <div class="space-y-4 text-sm" id="form">
+      <p class="text-xs text-slate-400">당첨금액은 <b class="text-slate-200">만 원</b> 단위로 넣어주세요.</p>
+
+      <label class="block">
+        <span class="block font-medium text-slate-300 mb-1">당첨금액</span>
+        <input type="number" inputmode="numeric" id="prize" value="10000" placeholder="예: 32000 (3억 2천만 원)" class="inp">
+      </label>
+      <p class="hint">1등 기준으로 넣어도 되고, 2·3등 당첨금도 계산 가능합니다.</p>
+
+      <button id="calcBtn" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg transition active:scale-[0.98]">계산하기</button>
+    </div>
+
+    <div id="result" class="mt-6 border-t border-slate-700/80 pt-5 space-y-4">
+      <div id="hero" class="rounded-xl p-4 text-center border bg-emerald-500/10 border-emerald-500/30">
+        <p class="text-xs font-semibold tracking-wider text-emerald-400">💰 실수령액</p>
+        <p id="heroValue" class="text-3xl font-black mt-1 text-emerald-300"></p>
+        <p id="heroSub" class="text-xs mt-1 text-slate-400"></p>
+      </div>
+      <div id="detail" class="bg-slate-900 rounded-xl border border-slate-700 p-3.5 text-xs space-y-2"></div>
+      <button id="copyBtn" class="w-full py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-xl text-xs transition border border-slate-600">📋 결과 텍스트 복사</button>
+      <p class="text-[11px] text-slate-500 leading-relaxed">참고용 추정치입니다. 입력값은 저장·전송되지 않습니다. 실제 수령액은 지급 기관(농협은행 등) 원천징수 기준이 정확합니다.</p>
+    </div>
+
+    <article class="prose-opae mt-8 pt-4 border-t border-slate-700">
+      <h2>로또 당첨금 세금, 왜 이렇게 계산되나</h2>
+      <p>복권 당첨금은 세법상 <strong>기타소득</strong>으로 분류되고, 지급 시점에 세금을 떼고 주는 <strong>분리과세</strong> 방식입니다. 받을 때 세금이 끝나기 때문에 다음 해 5월 종합소득세 신고에 다시 합산할 필요가 없습니다.</p>
+      <ul>
+        <li><strong>200만 원 이하</strong>는 비과세라 전액 그대로 받습니다. 로또 3·4·5등이 대부분 여기 해당합니다.</li>
+        <li><strong>200만 원 초과</strong>부터는 당첨금 전체에 세금이 붙습니다 — 3억 원까지는 <strong>22%</strong>(소득세 20% + 지방소득세 2%), 3억 원을 <strong>초과하는 금액</strong>에는 <strong>33%</strong>(소득세 30% + 지방소득세 3%)가 적용됩니다.</li>
+      </ul>
+      <p>예를 들어 20억 원에 당첨되면, 20억 원 전체에 33%를 떼는 게 아니라 <strong>3억 원까지는 22%, 나머지 17억 원에만 33%</strong>가 적용되는 구간별 계산입니다.</p>
+      <h2>이 계산기는 이렇게 계산합니다</h2>
+      <ul>
+        <li>당첨금 200만 원 이하 → 세금 0원, 전액 수령</li>
+        <li>당첨금 200만 원 초과 → min(당첨금, 3억 원) × 22% + max(0, 당첨금 − 3억 원) × 33%</li>
+        <li>실수령액 = 당첨금 − 세금</li>
+      </ul>
+      <h2>주의할 점</h2>
+      <ul>
+        <li>가족과 당첨금을 나누면 별도로 <strong>증여세</strong>가 발생할 수 있습니다. 이건 당첨금 세금과 완전히 다른 세목이라 이 계산기에는 반영되지 않았습니다.</li>
+        <li>연금식 복권을 20년간 분할 수령하는 경우 등 특수한 지급 방식은 세율이 다르게 적용될 수 있습니다.</li>
+      </ul>
+      <h2>계산 기준</h2>
+      <p>소득세법 제129조(원천징수세율) 및 국세청 기타소득 원천징수 안내 기준. 기준일: 2026년 9월. 세법 개정이 확정되면 수정합니다.</p>
+    </article>
+  </main>
+
+  <style>
+    .inp{width:100%;background:#0f172a;border:1px solid #334155;border-radius:.75rem;padding:.7rem;color:#fff;font-weight:600;outline:none}
+    .inp:focus{box-shadow:0 0 0 2px #f59e0b}
+    .hint{font-size:11px;color:#94a3b8;line-height:1.5}
+    .row{display:flex;justify-content:space-between;gap:.5rem;color:#94a3b8}
+    .row b{color:#e2e8f0;font-weight:600;white-space:nowrap}
+  </style>
+
+  <script>
+  const RATES = { threshold: 2000000, cut: 3e8, lowRate: 0.22, highRate: 0.33 };
+
+  function calcLotto(amount) {
+    if (amount <= RATES.threshold) return { tax: 0, taxLow: 0, taxHigh: 0, net: amount };
+    const low = Math.min(amount, RATES.cut);
+    const high = Math.max(0, amount - RATES.cut);
+    const taxLow = low * RATES.lowRate;
+    const taxHigh = high * RATES.highRate;
+    const tax = taxLow + taxHigh;
+    return { tax, taxLow, taxHigh, net: amount - tax };
+  }
+
+  const $ = (id) => document.getElementById(id);
+  const man = (id) => (parseFloat($(id).value) || 0) * 10000;
+  const won = (n) => Math.round(n).toLocaleString('ko-KR') + '원';
+  let summary = '';
+
+  function render() {
+    const amount = man('prize');
+    const r = calcLotto(amount);
+    const row = (a, b) => `<div class="row"><span>${a}</span><b>${b}</b></div>`;
+
+    $('heroValue').textContent = won(r.net);
+    $('heroSub').textContent = amount <= RATES.threshold ? '200만 원 이하 비과세' : '';
+
+    if (amount <= RATES.threshold) {
+      $('detail').innerHTML = row('당첨금액', won(amount)) + row('세금 (비과세)', '0원');
+    } else {
+      $('detail').innerHTML = [
+        row('당첨금액', won(amount)),
+        row('3억 원까지 (22%)', '−' + won(r.taxLow)),
+        r.taxHigh > 0 ? row('3억 원 초과분 (33%)', '−' + won(r.taxHigh)) : '',
+        `<div class="row border-t border-slate-800 pt-2"><span class="text-slate-200 font-semibold">총 세금</span><b class="text-amber-300">${won(r.tax)}</b></div>`,
+      ].join('');
+    }
+
+    summary = `[로또 당첨금 실수령액 계산]
+- 당첨금액: ${won(amount)}
+- 세금: ${won(r.tax)}
+- 실수령액: ${won(r.net)}
+https://opae.kr/lotto-tax/`;
+  }
+
+  function copy(text, btn) {
+    navigator.clipboard.writeText(text).then(() => { const o = btn.textContent; btn.textContent = '✅ 복사 완료'; setTimeout(() => btn.textContent = o, 2000); });
+  }
+  $('prize').addEventListener('input', render);
+  $('calcBtn').addEventListener('click', () => { render(); $('result').scrollIntoView({ behavior: 'smooth' }); });
+  $('copyBtn').addEventListener('click', () => copy(summary, $('copyBtn')));
+  render();
+  </script>
