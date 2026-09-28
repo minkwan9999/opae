@@ -136,7 +136,6 @@ def layout(path, meta, body):
 {body}
   <footer class="w-full max-w-lg pt-6 pb-4 text-center text-xs text-slate-500 space-y-2">
     <p class="space-x-3"><a href="/about/" class="hover:text-slate-300">소개</a><a href="/contact/" class="hover:text-slate-300">문의</a><a href="/privacy/" class="hover:text-slate-300">개인정보처리방침</a><a href="/changelog/" class="hover:text-slate-300">업데이트 내역</a></p>
-    <p><a href="https://minkwan9999.github.io" class="hover:text-slate-300">만든이의 다른 프로젝트 보기 →</a></p>
     <p>계산 결과는 참고용이며 법률·세무 자문이 아닙니다.</p>
     <p>© {TODAY[:4]} {SITE_NAME} · {VERSION}</p>
   </footer>
