@@ -5,7 +5,7 @@ on:
     branches: [ main ]
   workflow_dispatch:
   schedule:
-    - cron: "0 21 * * *"
+    - cron: "5 23 * * *"   # 매일 08:05 (한국시간) — 예약 글 공개
 
 permissions:
   contents: read
