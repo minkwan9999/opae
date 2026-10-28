@@ -31,6 +31,19 @@ OUT = os.path.join(ROOT, "_site")
 # 한국 시간 기준 오늘 날짜 (예약 발행 판단에 사용)
 TODAY = (datetime.datetime.utcnow() + datetime.timedelta(hours=9)).date().isoformat()
 
+# 가이드 분류: 이 순서대로 가이드 목록·홈에 나온다. 글의 category: 값이 slug와 같아야 한다.
+# (slug, 이름, 소개, 연결할 계산기 [(주소, 이름)])
+CATEGORIES = [
+    ("pay", "월급·급여", "월급에서 빠지는 돈, 4대보험, 연차수당, 주휴수당처럼 매달 급여와 관련된 계산을 정리한 글입니다.", []),
+    ("severance", "퇴직금", "퇴직금 계산법, 중간정산, 일시금과 IRP 수령 방식에 따른 세금 차이를 다룹니다.", [("/retire/", "퇴직금 절세 비교기")]),
+    ("leave", "육아휴직", "육아휴직급여와 휴직 중 부업 기준 등 휴직 기간에 알아둘 내용을 다룹니다.", [("/leave-tax/", "휴직한 해 연말정산 계산기")]),
+    ("pension", "연금·투자·대출", "ISA, 연금저축, IRP, 대출 상환과 투자의 비교처럼 목돈과 노후 준비에 관한 글입니다.", [("/isa/", "ISA 만기 연금전환 시뮬레이터"), ("/loan/", "대출 상환 vs 투자 계산기")]),
+    ("tax", "연말정산·공제", "연말정산에서 놓치기 쉬운 공제와 맞벌이·사업자 부부의 공제 배분을 다룹니다.", [("/leave-tax/", "휴직한 해 연말정산 계산기")]),
+    ("customs", "해외구매·관세", "해외직구 관부가세와 주류 면세 한도처럼 해외에서 사 올 때의 세금을 다룹니다.", [("/whisky/", "위스키·주류 세금 계산기")]),
+]
+CAT = {c[0]: c for c in CATEGORIES}
+
+
 # 계산기 목록: 홈 화면 카드 순서 = 이 순서
 CALCULATORS = [
     ("leave-tax", "🍼", "휴직한 해 연말정산 계산기", "육아휴직·무급휴직 환급 예상 + IRP 헛방 체크 + 부부 공제 배분"),
@@ -84,6 +97,7 @@ def layout(path, meta, body):
     url = SITE_URL + path
     noindex = '<meta name="robots" content="noindex">' if meta.get("noindex") else ""
     verify = ""
+    extra = meta.get("head_extra", "")
     if NAVER_VERIFY:
         verify += f'<meta name="naver-site-verification" content="{NAVER_VERIFY}">'
     if GOOGLE_VERIFY:
@@ -109,6 +123,7 @@ def layout(path, meta, body):
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   {noindex}
   {verify}
+  {extra}
   <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}gtag('js',new Date());gtag('config','{GA_ID}');</script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT}" crossorigin="anonymous"></script>
@@ -166,7 +181,7 @@ def load_guides():
             continue
         meta, lines, body_start = {}, chunk.splitlines(), 0
         for i, line in enumerate(lines):
-            m = re.match(r"^(title|slug|date|description|calc|draft|tags):\s*(.*)$", line)
+            m = re.match(r"^(title|slug|date|description|calc|draft|tags|category):\s*(.*)$", line)
             if m:
                 meta[m.group(1)] = m.group(2).strip()
             elif line.strip():
@@ -176,6 +191,8 @@ def load_guides():
             continue
         if meta.get("date", "") > TODAY:  # 예약 발행: 날짜가 오면 자동 공개
             continue
+        assert meta.get("category") in CAT, f"category 확인 필요: {meta['slug']} → {meta.get('category')}"
+        assert meta["slug"] not in CAT, f"slug가 분류 주소와 겹침: {meta['slug']}"
         meta["body"] = "\n".join(lines[body_start:])
         meta["tags"] = [t.strip() for t in meta.get("tags", "").split(",") if t.strip()]
         guides.append(meta)
@@ -183,13 +200,15 @@ def load_guides():
     return guides
 
 
-def related(guides, tags, calc_path="", exclude="", limit=3):
+def related(guides, tags, calc_path="", exclude="", limit=3, category=""):
     """태그가 겹치거나 같은 계산기를 가리키는 가이드를 골라준다."""
     scored = []
     for g in guides:
         if g["slug"] == exclude:
             continue
         score = len(set(tags) & set(g["tags"])) + (2 if calc_path and g.get("calc") == calc_path else 0)
+        if score and category and g.get("category") == category:
+            score += 1
         if score:
             scored.append((score, g.get("date", ""), g))
     scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
@@ -201,6 +220,32 @@ def related_html(items, heading="함께 보면 좋은 글"):
         return ""
     lis = "".join(f'<li><a href="/guide/{g["slug"]}/" class="text-blue-300 hover:underline">{html.escape(g["title"])}</a></li>' for g in items)
     return f'<section class="mt-6 pt-4 border-t border-slate-700"><h2 class="text-sm font-bold text-white">{heading}</h2><ul class="mt-2 space-y-1.5 text-sm list-disc pl-5">{lis}</ul></section>'
+
+
+def breadcrumb(crumbs):
+    """crumbs: [(이름, 주소)] → (화면용 HTML, 검색엔진용 JSON-LD)"""
+    import json
+    parts = []
+    for i, (name, href) in enumerate(crumbs):
+        parts.append(html.escape(name) if i == len(crumbs) - 1 else f'<a href="{href}" class="hover:text-slate-300">{html.escape(name)}</a>')
+    ld = {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": i + 1, "name": n, "item": SITE_URL + h} for i, (n, h) in enumerate(crumbs)]}
+    return " › ".join(parts), '<script type="application/ld+json">' + json.dumps(ld, ensure_ascii=False) + "</script>"
+
+
+def guide_li(g):
+    p = f"/guide/{g['slug']}/"
+    return f'<li class="py-2 border-b border-slate-700"><a href="{p}" class="text-sm font-bold text-white hover:text-blue-400">{html.escape(g["title"])}</a><p class="text-xs text-slate-400">{html.escape(g.get("description", ""))}</p></li>'
+
+
+def category_list_html(guides):
+    """홈에 넣는 '주제별 가이드' 목록."""
+    out = []
+    for slug, name, intro, _ in CATEGORIES:
+        n = sum(1 for g in guides if g["category"] == slug)
+        if n:
+            out.append(f'<li><a href="/guide/{slug}/" class="hover:text-blue-400">{html.escape(name)}</a> <span class="text-slate-500 text-xs">({n}편)</span></li>')
+    return "\n".join(out)
 
 
 def md(text):
@@ -232,6 +277,7 @@ def build():
             for g in guides[:5]) or '<li class="text-slate-500">가이드 글 준비 중입니다.</li>'
         body = (body.replace("{{CALCULATOR_CARDS}}", cards)
                     .replace("{{GUIDE_LIST}}", glist)
+                    .replace("{{CATEGORY_LIST}}", category_list_html(guides))
                     .replace("{{CONTACT_FORM_URL}}", CONTACT_FORM_URL))
         if slug == "contact" and not CONTACT_FORM_URL:
             body = re.sub(r"<!--FORM-->.*?<!--/FORM-->", '<p class="text-sm text-slate-400">문의 양식을 준비 중입니다.</p>', body, flags=re.S)
@@ -250,26 +296,52 @@ def build():
     # 2) 가이드 글
     items = []
     for g in guides:
+        cname = CAT[g["category"]][1]
+        crumb_html, crumb_ld = breadcrumb([("가이드", "/guide/"), (cname, f"/guide/{g['category']}/"), (g["title"], f"/guide/{g['slug']}/")])
         calc = ""
         if g.get("calc"):
             calc = f'<a href="{g["calc"]}" class="block mt-6 p-3 rounded-xl bg-blue-600/20 border border-blue-500/40 text-center text-sm font-bold text-blue-300 hover:bg-blue-600/30">→ 계산기로 바로 계산해보기</a>'
         body = f"""  <main class="w-full max-w-lg bg-slate-800/90 rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
-    <p class="text-xs text-slate-500"><a href="/guide/" class="hover:text-slate-300">가이드</a> · {g.get('date', '')}</p>
+    <p class="text-xs text-slate-500">{crumb_html} · {g.get('date', '')}</p>
     <h1 class="text-xl font-extrabold text-white mt-1">{html.escape(g['title'])}</h1>
     <article class="prose-opae mt-4">{md(g['body'])}</article>
     {calc}
-    {related_html(related(guides, g["tags"], calc_path=g.get("calc", ""), exclude=g["slug"]))}
+    {related_html(related(guides, g["tags"], calc_path=g.get("calc", ""), exclude=g["slug"], category=g["category"]))}
   </main>"""
         p = f"/guide/{g['slug']}/"
-        write(f"guide/{g['slug']}/index.html", layout(p, {"title": f"{g['title']} | {SITE_NAME}", "description": g.get("description", "")}, body))
+        write(f"guide/{g['slug']}/index.html", layout(p, {"title": f"{g['title']} | {SITE_NAME}", "description": g.get("description", ""), "head_extra": crumb_ld}, body))
         urls.append(p)
-        items.append(f'<li class="py-2 border-b border-slate-700"><a href="{p}" class="text-sm font-bold text-white hover:text-blue-400">{html.escape(g["title"])}</a><p class="text-xs text-slate-400">{html.escape(g.get("description", ""))}</p></li>')
+    sections = []
+    for slug, name, intro, calcs in CATEGORIES:
+        gs = [g for g in guides if g["category"] == slug]
+        if not gs:
+            continue
+        # 분류 안에서는 오래된 글부터 (읽는 순서)
+        gs_sorted = sorted(gs, key=lambda x: x.get("date", ""))
+        hp = f"/guide/{slug}/"
+        crumb_html, crumb_ld = breadcrumb([("가이드", "/guide/"), (name, hp)])
+        calc_html = "".join(f'<a href="{h}" class="block mt-2 p-3 rounded-xl bg-blue-600/20 border border-blue-500/40 text-center text-sm font-bold text-blue-300 hover:bg-blue-600/30">→ {html.escape(n)}</a>' for h, n in calcs)
+        hub = f"""  <main class="w-full max-w-lg bg-slate-800/90 rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
+    <p class="text-xs text-slate-500">{crumb_html}</p>
+    <h1 class="text-xl font-extrabold text-white mt-1">{html.escape(name)} 가이드</h1>
+    <p class="text-sm text-slate-300 mt-2 leading-relaxed">{html.escape(intro)}</p>
+    <ul class="mt-4">{''.join(guide_li(g) for g in gs_sorted)}</ul>
+    {('<div class="mt-4">' + calc_html + '</div>') if calc_html else ''}
+    <p class="mt-4 text-xs"><a href="/guide/" class="text-blue-400 hover:underline">← 전체 가이드 분류 보기</a></p>
+  </main>"""
+        write(f"guide/{slug}/index.html", layout(hp, {"title": f"{name} 가이드 | {SITE_NAME}", "description": f"{name}: {intro}", "head_extra": crumb_ld}, hub))
+        urls.append(hp)
+        sections.append(f"""    <section class="mt-5">
+      <h2 class="text-base font-extrabold text-white"><a href="{hp}" class="hover:text-blue-400">{html.escape(name)}</a> <span class="text-xs font-normal text-slate-500">{len(gs)}편</span></h2>
+      <p class="text-xs text-slate-400 mt-1">{html.escape(intro)}</p>
+      <ul class="mt-2">{''.join(guide_li(g) for g in gs)}</ul>
+    </section>""")
     body = f"""  <main class="w-full max-w-lg bg-slate-800/90 rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
     <h1 class="text-xl font-extrabold text-white">가이드</h1>
-    <p class="text-xs text-slate-400 mt-1">계산기 뒤에 있는 원리와 실제 사례를 정리합니다.</p>
-    <ul class="mt-4">{''.join(items) or '<li class="text-sm text-slate-500">가이드 글 준비 중입니다.</li>'}</ul>
+    <p class="text-xs text-slate-400 mt-1">계산기 뒤에 있는 원리와 실제 사례를 주제별로 정리합니다.</p>
+{''.join(sections) or '<p class="text-sm text-slate-500 mt-4">가이드 글 준비 중입니다.</p>'}
   </main>"""
-    write("guide/index.html", layout("/guide/", {"title": f"가이드 | {SITE_NAME}", "description": "절세·재테크·급여 계산의 원리와 실제 사례를 정리한 가이드 모음"}, body))
+    write("guide/index.html", layout("/guide/", {"title": f"가이드 | {SITE_NAME}", "description": "절세·재테크·급여 계산의 원리와 실제 사례를 주제별로 정리한 가이드 모음"}, body))
     urls.append("/guide/")
 
     # 3) 업데이트 내역 (첫 줄 제목은 빼고 렌더링)

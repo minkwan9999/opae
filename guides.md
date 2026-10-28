@@ -7,6 +7,7 @@
   date:         공개일 (예: 2026-10-01). 오늘(한국시간)보다 미래면 숨겨두었다가 그날 아침 8시대(08:05 빌드)에 자동 공개. 최신 날짜가 위에 나온다
   description:  검색 결과에 보일 한두 문장 요약
   calc:         글 아래에 연결할 계산기 주소 (예: /retire/)
+  category:     분류 (pay·severance·leave·pension·tax·customs 중 하나. 새 분류는 build.py의 CATEGORIES에 추가)
   tags:         관련 글 연결용 태그, 쉼표로 구분 (예: 퇴직금, 연금, 세금)
   draft:        yes 로 두면 사이트에 안 올라감 (초안 보관용)
 
@@ -28,6 +29,7 @@ draft: yes
 =====
 title: 퇴직금 일시금 vs IRP, 세금 차이는 얼마나 날까
 slug: retirement-pay-lump-sum-vs-irp
+category: severance
 tags: 퇴직금, 연금, 세금
 date: 2026-09-24
 description: 퇴직금을 일시금으로 받을 때와 IRP로 옮겨 연금으로 받을 때 퇴직소득세가 얼마나 달라지는지, 근속연수별 실제 숫자로 비교합니다.
@@ -94,6 +96,7 @@ calc: /retire/
 =====
 title: 위스키 면세 한도, 몇 병까지 세금 없이 들고 올 수 있을까
 slug: whisky-duty-free-limit
+category: customs
 tags: 관세, 해외직구, 세금
 date: 2026-09-24
 description: 해외여행에서 위스키를 사 올 때 면세 기준(2L·400달러, 병 수 제한 없음)과 초과했을 때 실제로 내는 세금을 예시로 계산합니다.
@@ -157,6 +160,7 @@ calc: /whisky/
 =====
 title: 대출 먼저 갚을까, 투자할까: '확정 수익'과 '기대 수익'의 차이
 slug: repay-loan-or-invest
+category: pension
 tags: 대출, 투자, 세금
 date: 2026-09-24
 description: 목돈이 생겼을 때 대출 상환과 투자 중 무엇이 나은지, 대출 금리로 계산하는 손익분기 수익률과 현실적인 예외를 정리합니다.
@@ -213,6 +217,7 @@ calc: /loan/
 =====
 title: ISA 계좌, 만들어만 두고 몰랐던 사람을 위한 정리 (만기 연금전환 포함)
 slug: isa-basics-and-pension-transfer
+category: pension
 tags: ISA, 연금, 세금, 투자
 date: 2026-09-25
 description: ISA 계좌가 뭔지, 어떤 세금 혜택이 있는지, 만기 때 연금계좌로 옮기면 세금을 얼마나 돌려받는지 초보자 눈높이로 정리합니다.
@@ -273,6 +278,7 @@ ISA(개인종합자산관리계좌)는 계좌 하나 안에 예금, 펀드, ETF,
 =====
 title: 육아휴직급여 2026, 실제로 한 달에 얼마 받을까
 slug: parental-leave-benefit-2026
+category: leave
 date: 2026-09-26
 tags: 육아휴직, 급여, 직장인
 description: 2026년 육아휴직급여 지급 기준(첫 3개월 최대 250만 원, 4~6개월 200만 원, 7개월부터 160만 원)과 월급별 예상 수령액, 휴직 전에 준비할 것을 정리합니다.
@@ -326,6 +332,7 @@ description: 2026년 육아휴직급여 지급 기준(첫 3개월 최대 250만 
 =====
 title: 육아휴직 중 부업, 어디까지 괜찮을까 (급여 끊기지 않는 기준)
 slug: side-job-during-parental-leave
+category: leave
 date: 2026-09-27
 tags: 육아휴직, 급여, 직장인, 부업
 description: 육아휴직 중 아르바이트·프리랜서·블로그 수익 등 부업을 할 때 육아휴직급여가 멈추는 기준과 신고 의무, 확인해야 할 것을 정리합니다.
@@ -379,6 +386,7 @@ description: 육아휴직 중 아르바이트·프리랜서·블로그 수익 �
 =====
 title: 퇴직금 계산법 한 번에 정리 (평균임금·재직일수·상여금)
 slug: severance-pay-calculation
+category: severance
 date: 2026-09-28
 tags: 퇴직금, 급여, 직장인
 description: 퇴직금이 어떤 공식으로 계산되는지, 평균임금에 상여금과 연차수당이 어떻게 들어가는지, 육아휴직 기간은 어떻게 처리되는지 예시로 정리합니다.
@@ -441,6 +449,7 @@ calc: /retire/
 =====
 title: 퇴직금 중간정산, 언제 받을 수 있을까 (집 살 때 받아본 후기)
 slug: severance-mid-term-settlement
+category: severance
 date: 2026-09-29
 tags: 퇴직금, 직장인, 세금
 description: 퇴직금 중간정산이 가능한 법정 사유, 주택 구입 시 신청 기한과 서류, 퇴직연금(DB·DC)별 차이, 정산 뒤 달라지는 점을 정리합니다.
@@ -508,6 +517,7 @@ calc: /retire/
 =====
 title: 연봉 실수령액, 월급에서 뭐가 얼마나 빠지는 걸까 (2026)
 slug: take-home-pay-2026
+category: pay
 date: 2026-09-30
 tags: 급여, 직장인, 세금, 4대보험
 description: 연봉 3천만~1억 원의 2026년 월 실수령액과, 월급에서 빠지는 국민연금·건강보험·장기요양·고용보험·소득세가 각각 얼마인지 예시로 정리합니다.
@@ -570,6 +580,7 @@ description: 연봉 3천만~1억 원의 2026년 월 실수령액과, 월급에�
 =====
 title: 2026년 4대보험 요율 총정리 (근로자·회사 부담, 육아휴직 중에는?)
 slug: four-insurances-rates-2026
+category: pay
 date: 2026-10-01
 tags: 4대보험, 급여, 직장인, 육아휴직
 description: 2026년 국민연금·건강보험·장기요양·고용·산재보험 요율과 근로자·사업주 부담 비율, 올해 바뀐 점, 육아휴직 중 보험료 처리를 정리합니다.
@@ -621,6 +632,7 @@ description: 2026년 국민연금·건강보험·장기요양·고용·산재보
 =====
 title: 연차 개수와 연차수당 계산법 (1년 미만·근속연수별·육아휴직 기간)
 slug: annual-leave-and-pay
+category: pay
 date: 2026-10-02
 tags: 연차, 급여, 직장인, 육아휴직
 description: 근속연수별 연차 개수, 1년 미만 신입의 월차, 못 쓴 연차의 수당 계산법, 육아휴직 기간의 연차 처리까지 예시로 정리합니다.
@@ -676,6 +688,7 @@ description: 근속연수별 연차 개수, 1년 미만 신입의 월차, 못 �
 =====
 title: 주휴수당 계산법 2026 (알바·사장님 둘 다 보는 정리)
 slug: weekly-holiday-pay-2026
+category: pay
 date: 2026-10-03
 tags: 주휴수당, 급여, 알바, 최저임금
 description: 2026년 최저임금 기준 주휴수당을 받는 조건과 계산 공식, 근무시간별 예시, 5인 미만 사업장에서 달라지는 점을 정리합니다.
@@ -734,6 +747,7 @@ description: 2026년 최저임금 기준 주휴수당을 받는 조건과 계산
 =====
 title: 연금저축 vs IRP, 뭐가 다르고 어떻게 나눠 넣을까
 slug: pension-savings-vs-irp
+category: pension
 date: 2026-10-04
 tags: 연금, 세금, 직장인, 투자
 description: 연금저축과 IRP의 세액공제 한도, 투자 가능 상품, 중도 인출 차이를 비교하고, 연말정산에서 최대로 돌려받는 조합을 정리합니다.
@@ -790,6 +804,7 @@ ISA가 만기되면 60일 안에 연금저축이나 IRP로 옮겨서 **최대 30
 =====
 title: 해외직구 관부가세 계산법 (150달러·200달러 면세와 합산과세)
 slug: overseas-purchase-customs-duty
+category: customs
 date: 2026-10-05
 tags: 관세, 해외직구, 세금
 description: 해외직구 면세 한도(150달러, 미국 200달러), 넘었을 때 관세와 부가세 계산 방법, 합산과세에 걸리는 경우와 주의할 품목을 예시로 정리합니다.
@@ -850,6 +865,7 @@ calc: /whisky/
 =====
 title: 연말정산 놓치기 쉬운 공제 7가지 (휴직한 해에 특히 챙길 것)
 slug: year-end-tax-missed-deductions
+category: tax
 date: 2026-10-06
 tags: 세금, 직장인, 연금, 육아휴직
 calc: /leave-tax/
@@ -914,6 +930,7 @@ description: 월세, 주택청약, 연금계좌, 부양가족, 의료비, 자녀
 =====
 title: 직장인+사업자 부부 연말정산, 아이 공제는 누가 받아야 할까
 slug: worker-business-couple-deduction
+category: tax
 date: 2026-10-08
 tags: 세금, 직장인, 육아휴직, 맞벌이, 사업자
 description: 남편은 직장인, 아내는 사업자처럼 연말정산과 종합소득세로 나뉘는 부부가 아이·부모님 공제를 누구에게 몰아야 유리한지, 휴직한 해에는 무엇이 달라지는지, 중복공제를 막는 순서까지 정리합니다.
