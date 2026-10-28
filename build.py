@@ -58,6 +58,28 @@ CALCULATORS = [
 ]
 
 
+# 계산기별 기준 정보: 마지막으로 법령·요율을 확인한 날짜(수동 갱신)와 근거 출처.
+# 세법·요율을 점검할 때마다 날짜를 고친다. 자동으로 오늘 날짜를 찍지 않는다(확인하지 않은 걸 확인했다고 하지 않기 위해).
+LAW = "https://www.law.go.kr/법령/"
+CALC_INFO = {
+    "retire": ("2026년 9월", [("소득세법", LAW + "소득세법"), ("국세청", "https://www.nts.go.kr"), ("홈택스", "https://hometax.go.kr")]),
+    "leave-tax": ("2026년 9월", [("소득세법", LAW + "소득세법"), ("조세특례제한법", LAW + "조세특례제한법"), ("국세청", "https://www.nts.go.kr")]),
+    "loan": ("2026년 9월", [("소득세법", LAW + "소득세법"), ("국세청", "https://www.nts.go.kr")]),
+    "whisky": ("2026년 9월", [("관세법", LAW + "관세법"), ("주세법", LAW + "주세법"), ("관세청", "https://www.customs.go.kr")]),
+    "isa": ("2026년 9월", [("조세특례제한법", LAW + "조세특례제한법"), ("국세청", "https://www.nts.go.kr")]),
+    "lotto-tax": ("2026년 9월", [("소득세법", LAW + "소득세법"), ("국세청", "https://www.nts.go.kr")]),
+}
+
+
+def info_html(slug):
+    if slug not in CALC_INFO:
+        return ""
+    checked, srcs = CALC_INFO[slug]
+    links = " · ".join(f'<a href="{u}" target="_blank" rel="noopener" class="text-blue-400 underline">{html.escape(n)}</a>' for n, u in srcs)
+    return (f'<div class="w-full max-w-lg px-1 -mt-1 mb-3 text-[11px] text-slate-500 leading-relaxed">'
+            f'법령·요율 마지막 확인: {checked} · 근거: {links} · 세법이 바뀌면 수정하고 <a href="/changelog/" class="underline">업데이트 내역</a>에 남깁니다.</div>')
+
+
 def read(path):
     with open(path, encoding="utf-8") as f:
         return f.read()
@@ -284,6 +306,7 @@ def build():
                     .replace("{{CONTACT_FORM_URL}}", CONTACT_FORM_URL))
         if slug == "contact" and not CONTACT_FORM_URL:
             body = re.sub(r"<!--FORM-->.*?<!--/FORM-->", '<p class="text-sm text-slate-400">문의 양식을 준비 중입니다.</p>', body, flags=re.S)
+        body += info_html(slug)
         tags = [t.strip() for t in meta.get("tags", "").split(",") if t.strip()]
         if tags:
             rel = related_html(related(guides, tags, calc_path=path), "이 계산기와 관련된 가이드")
