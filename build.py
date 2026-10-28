@@ -42,6 +42,9 @@ CATEGORIES = [
     ("customs", "해외구매·관세", "해외직구 관부가세와 주류 면세 한도처럼 해외에서 사 올 때의 세금을 다룹니다.", [("/whisky/", "위스키·주류 세금 계산기")]),
 ]
 CAT = {c[0]: c for c in CATEGORIES}
+PER_PAGE = 5  # 한 분류에서 한 번에 보여줄 글 수. 넘으면 페이지 넘김 버튼이 생긴다.
+PAGER_JS = """document.querySelectorAll('details.guide-cat').forEach(function(d){var per=+d.dataset.per,li=[].slice.call(d.querySelectorAll('.guide-items>li'));if(li.length<=per)return;var nav=document.createElement('div');nav.className='pg flex flex-wrap items-center gap-1 mt-3';d.querySelector('.guide-items').after(nav);var n=Math.ceil(li.length/per);function show(p){li.forEach(function(x,i){x.style.display=(i>=p*per&&i<(p+1)*per)?'':'none'});nav.innerHTML='';function b(t,pg,dis,cur){var e=document.createElement('button');e.type='button';e.textContent=t;e.disabled=dis;if(cur)e.setAttribute('aria-current','true');e.onclick=function(){show(pg)};nav.appendChild(e)}b('이전',p-1,p===0);for(var i=0;i<n;i++)b(i+1,i,false,i===p);b('다음',p+1,p===n-1)}show(0)});
+if(location.hash){var t=document.querySelector('details[data-slug="'+location.hash.slice(1)+'"]');if(t)t.open=true}"""
 
 
 # 계산기 목록: 홈 화면 카드 순서 = 이 순서
@@ -331,16 +334,23 @@ def build():
   </main>"""
         write(f"guide/{slug}/index.html", layout(hp, {"title": f"{name} 가이드 | {SITE_NAME}", "description": f"{name}: {intro}", "head_extra": crumb_ld}, hub))
         urls.append(hp)
-        sections.append(f"""    <section class="mt-5">
-      <h2 class="text-base font-extrabold text-white"><a href="{hp}" class="hover:text-blue-400">{html.escape(name)}</a> <span class="text-xs font-normal text-slate-500">{len(gs)}편</span></h2>
-      <p class="text-xs text-slate-400 mt-1">{html.escape(intro)}</p>
-      <ul class="mt-2">{''.join(guide_li(g) for g in gs)}</ul>
-    </section>""")
+        sections.append(f"""    <details name="cat" id="{slug}" data-slug="{slug}" class="guide-cat mt-3 rounded-xl border border-slate-700 bg-slate-900/40" data-per="{PER_PAGE}">
+      <summary class="cursor-pointer select-none p-3 flex items-center justify-between gap-2">
+        <span><span class="text-base font-extrabold text-white">{html.escape(name)}</span> <span class="text-xs font-normal text-slate-500">{len(gs)}편</span><span class="block text-xs text-slate-400 mt-0.5">{html.escape(intro)}</span></span>
+        <span class="text-slate-500 text-xs shrink-0 caret">▼</span>
+      </summary>
+      <div class="px-3 pb-3">
+        <ul class="guide-items">{''.join(guide_li(g) for g in gs)}</ul>
+        <p class="mt-2 text-xs"><a href="{hp}" class="text-blue-400 hover:underline">{html.escape(name)} 전체 보기 →</a></p>
+      </div>
+    </details>""")
     body = f"""  <main class="w-full max-w-lg bg-slate-800/90 rounded-2xl shadow-xl border border-slate-700 p-5 my-3">
     <h1 class="text-xl font-extrabold text-white">가이드</h1>
-    <p class="text-xs text-slate-400 mt-1">계산기 뒤에 있는 원리와 실제 사례를 주제별로 정리합니다.</p>
+    <p class="text-xs text-slate-400 mt-1">계산기 뒤에 있는 원리와 실제 사례를 주제별로 정리합니다. 주제를 눌러 펼쳐 보세요.</p>
 {''.join(sections) or '<p class="text-sm text-slate-500 mt-4">가이드 글 준비 중입니다.</p>'}
-  </main>"""
+  </main>
+  <style>details>summary{{list-style:none}}details>summary::-webkit-details-marker{{display:none}}details[open] .caret{{transform:rotate(180deg)}}.pg button{{min-width:2rem;padding:.25rem .5rem;border:1px solid #334155;border-radius:.5rem;font-size:.75rem;color:#cbd5e1}}.pg button[aria-current=true]{{background:#2563eb;border-color:#2563eb;color:#fff}}.pg button:disabled{{opacity:.35}}</style>
+  <script>{PAGER_JS}</script>"""
     write("guide/index.html", layout("/guide/", {"title": f"가이드 | {SITE_NAME}", "description": "절세·재테크·급여 계산의 원리와 실제 사례를 주제별로 정리한 가이드 모음"}, body))
     urls.append("/guide/")
 
