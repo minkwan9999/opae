@@ -281,6 +281,7 @@ def build():
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
     urls = []
+    lastmods = {}  # 주소 → 수정일. 고정 페이지는 넣지 않아 lastmod를 생략한다
     guides = load_guides()
 
     # 0) static/ 폴더(로고·아이콘·공유 이미지)는 그대로 복사
@@ -337,6 +338,8 @@ def build():
         p = f"/guide/{g['slug']}/"
         write(f"guide/{g['slug']}/index.html", layout(p, {"title": f"{g['title']} | {SITE_NAME}", "description": g.get("description", ""), "head_extra": crumb_ld}, body))
         urls.append(p)
+        if g.get("date"):
+            lastmods[p] = g["date"]
     sections = []
     for slug, name, intro, calcs in CATEGORIES:
         gs = [g for g in guides if g["category"] == slug]
@@ -357,6 +360,8 @@ def build():
   </main>"""
         write(f"guide/{slug}/index.html", layout(hp, {"title": f"{name} 가이드 | {SITE_NAME}", "description": f"{name}: {intro}", "head_extra": crumb_ld}, hub))
         urls.append(hp)
+        if any(x.get("date") for x in gs):
+            lastmods[hp] = max(x.get("date", "") for x in gs)
         sections.append(f"""    <details name="cat" id="{slug}" data-slug="{slug}" class="guide-cat mt-3 rounded-xl border border-slate-700 bg-slate-900/40" data-per="{PER_PAGE}">
       <summary class="cursor-pointer select-none p-3 flex items-center justify-between gap-2">
         <span><span class="text-base font-extrabold text-white">{html.escape(name)}</span> <span class="text-xs font-normal text-slate-500">{len(gs)}편</span><span class="block text-xs text-slate-400 mt-0.5">{html.escape(intro)}</span></span>
@@ -376,6 +381,8 @@ def build():
   <script>{PAGER_JS}</script>"""
     write("guide/index.html", layout("/guide/", {"title": f"가이드 | {SITE_NAME}", "description": "절세·재테크·급여 계산의 원리와 실제 사례를 주제별로 정리한 가이드 모음"}, body))
     urls.append("/guide/")
+    if any(x.get("date") for x in guides):
+        lastmods["/guide/"] = max(x.get("date", "") for x in guides)
 
     # 3) 업데이트 내역 (첫 줄 제목은 빼고 렌더링)
     log = md(read(os.path.join(ROOT, "CHANGELOG.md")).split("\n", 1)[1])
@@ -387,7 +394,9 @@ def build():
     urls.append("/changelog/")
 
     # 4) 검색엔진·광고용 파일
-    sm = "\n".join(f"  <url><loc>{SITE_URL}{u}</loc><lastmod>{TODAY}</lastmod></url>" for u in urls)
+    sm = "\n".join(
+        f"  <url><loc>{SITE_URL}{u}</loc>" + (f"<lastmod>{lastmods[u]}</lastmod>" if u in lastmods else "") + "</url>"
+        for u in urls)
     write("sitemap.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{sm}\n</urlset>\n')
     write("robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n")
     write("ads.txt", f"google.com, {ADSENSE_CLIENT.replace('ca-', '')}, DIRECT, f08c47fec0942fa0\n")
