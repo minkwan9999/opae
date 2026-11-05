@@ -1121,7 +1121,7 @@ calc: /leave-tax/
 title: 연말정산 환급이 적은 이유와 12월 안에 할 수 있는 5가지
 slug: year-end-tax-december-checklist
 category: tax
-date: 2026-11-13
+date: 2026-11-06
 tags: 세금, 직장인, 연금, 연말정산
 calc: /leave-tax/
 description: 2026년 귀속 연말정산(2027년 2월 정산)에서 환급이 적게 나오는 구조와, 12월 안에 카드 사용 배분·연금계좌 납입 등으로 점검할 5가지를 가상 사례로 정리합니다.
@@ -1236,7 +1236,7 @@ description: 2026년 귀속 연말정산(2027년 2월 정산)에서 환급이 �
 title: 연말정산 신용카드 공제, 총급여 25% 넘게 써야 받는다 (계산 예시)
 slug: credit-card-deduction-year-end-2026
 category: tax
-date: 2026-11-17
+date: 2026-11-08
 tags: 세금, 직장인, 카드, 연말정산
 calc: /leave-tax/
 description: 2026년 귀속 연말정산(2027년 2월 정산)에서 신용카드 공제가 시작되는 문턱과 신용·체크 공제율 차이를 총급여 4,800만 원 가상 사례 계산 표로 풀어 봅니다.
@@ -1372,7 +1372,7 @@ description: 2026년 귀속 연말정산(2027년 2월 정산)에서 신용카드
 title: 맞벌이 연말정산, 자녀·부모님 공제 누가 받아야 유리할까 (2026년 귀속 계산 예시)
 slug: couple-dual-income-deduction-split-2026
 category: tax
-date: 2026-11-20
+date: 2026-11-10
 tags: 세금, 직장인, 맞벌이, 연말정산
 calc: /leave-tax/
 description: 둘 다 직장인인 맞벌이 부부가 2026년 귀속 연말정산(2027년 2월 정산)에서 자녀·부모님 공제를 누구에게 몰아야 하는지, 나눌 수 있는 항목과 없는 항목, 가상 사례 계산 표로 정리합니다.
@@ -1488,7 +1488,7 @@ description: 둘 다 직장인인 맞벌이 부부가 2026년 귀속 연말정�
 title: 연금저축·IRP 12월에 얼마 넣어야 세액공제가 남김없이 쓰일까 (2026년 귀속 계산 예시)
 slug: pension-year-end-deposit-2026
 category: tax
-date: 2026-11-24
+date: 2026-11-12
 tags: 연금저축, IRP, 세액공제, 연말정산, 세금, 직장인
 calc: /leave-tax/
 description: 2026년 귀속 연말정산(2027년 2월 정산)에서 연금저축 600만 원, 연금저축+IRP 합산 900만 원 한도와 총급여 구간별 공제율, 산출세액을 넘으면 공제가 남는 경우를 가상 사례 표로 정리합니다.
