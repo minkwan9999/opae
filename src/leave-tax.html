@@ -35,7 +35,7 @@ tags: 세금, 직장인, 연금, 육아휴직
         <div class="grid grid-cols-2 gap-3">
           <label class="block"><span class="block font-medium text-slate-300 mb-1">자녀 수 (만 20세 이하)</span>
             <input type="number" inputmode="numeric" id="kids" value="1" min="0" class="inp"></label>
-          <label class="block"><span class="block font-medium text-slate-300 mb-1">그중 8세 이상</span>
+          <label class="block"><span class="block font-medium text-slate-300 mb-1">그중 9세 이상 (2026년 귀속, 2027년 10세 이상으로 단계 상향)</span>
             <input type="number" inputmode="numeric" id="kids8" value="0" min="0" class="inp"></label>
         </div>
         <label class="block"><span class="block font-medium text-slate-300 mb-1">올해 출산·입양</span>
@@ -78,8 +78,13 @@ tags: 세금, 직장인, 연금, 육아휴직
           <label class="block"><span class="block font-medium text-slate-300 mb-1">체크카드·현금영수증</span>
             <input type="number" inputmode="numeric" id="debit" value="300" class="inp"></label>
         </div>
-        <label class="block"><span class="block font-medium text-slate-300 mb-1">연금저축 + IRP 납입액</span>
-          <input type="number" inputmode="numeric" id="pension" value="600" class="inp"></label>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block"><span class="block font-medium text-slate-300 mb-1">연금저축 납입액</span>
+            <input type="number" inputmode="numeric" id="pensionSav" value="600" class="inp"></label>
+          <label class="block"><span class="block font-medium text-slate-300 mb-1">IRP(퇴직연금 포함) 납입액</span>
+            <input type="number" inputmode="numeric" id="pensionIrp" value="0" class="inp"></label>
+        </div>
+        <p class="hint">연금저축만으로는 600만 원까지, 연금저축과 IRP를 합쳐 900만 원까지 공제 대상입니다.</p>
         <details class="bg-slate-900/60 border border-slate-700 rounded-xl p-3">
           <summary class="text-xs font-semibold text-slate-300 cursor-pointer">선택: 보험료·의료비·교육비·사회보험료</summary>
           <div class="grid grid-cols-2 gap-3 mt-3">
@@ -117,8 +122,8 @@ tags: 세금, 직장인, 연금, 육아휴직
       <p>육아휴직을 하면 회사 급여가 몇 달 끊기고, 대신 고용센터에서 육아휴직급여를 받습니다. 육아휴직급여는 <strong>비과세</strong>라서 연말정산 총급여에 들어가지 않습니다. 그래서 휴직한 해에는 세 가지가 평소와 달라집니다.</p>
       <ul>
         <li><strong>환급이 커지기 쉽습니다.</strong> 회사는 매달 "이 월급을 1년 내내 받는다"고 보고 세금을 뗍니다. 실제 1년 급여는 그보다 적으니, 미리 뗀 세금이 많아져 돌려받을 몫이 생깁니다.</li>
-        <li><strong>세액공제가 헛방이 될 수 있습니다.</strong> 세액공제는 낼 세금(결정세액)을 넘어서 돌려주지 않습니다. 결정세액이 0원이 되면 IRP를 더 넣어도 올해 환급은 늘지 않습니다.</li>
-        <li><strong>문턱은 낮아집니다.</strong> 총급여가 줄면 신용카드 공제 문턱(총급여의 25%), 의료비 문턱(3%)이 낮아지고, 총급여 5,500만 원 이하가 되면 연금계좌 공제율이 13.2%에서 16.5%로 올라갑니다.</li>
+        <li><strong>세액공제가 헛방이 될 수 있습니다.</strong> 세액공제는 산출세액에서 다른 공제를 뺀 뒤 남은 세금까지만 적용되고, 그 이상은 돌려주지 않습니다. 남은 세금이 0원이 되면 IRP를 더 넣어도 올해 환급은 늘지 않습니다.</li>
+        <li><strong>문턱은 낮아집니다.</strong> 총급여가 줄면 신용카드 공제 문턱(총급여의 25%), 의료비 문턱(3%)이 낮아지고, 총급여 5,500만 원 이하가 되면 연금계좌 공제율이 13.2%에서 16.5%로 올라갑니다(근로소득 외 소득이 있으면 종합소득금액 4,500만 원 이하 기준).</li>
       </ul>
       <h2>이 계산기는 이렇게 계산합니다</h2>
       <ul>
@@ -133,7 +138,7 @@ tags: 세금, 직장인, 연금, 육아휴직
       <ul>
         <li><strong>배우자가 사업자</strong>라면 배우자는 다음 해 5월 종합소득세로 신고합니다. 내 연말정산(1~2월)이 먼저 끝나므로, 어느 쪽이 받을지 정한 뒤 세무사에게 알려야 <strong>중복 공제</strong>(가산세 대상)를 막을 수 있습니다.</li>
         <li>사업자는 신용카드·보험료·의료비·교육비 공제를 원칙적으로 받지 못합니다. 이 항목은 직장인 쪽에서만 계산합니다.</li>
-        <li>연금저축·IRP는 계좌 주인만 공제받습니다. 내 결정세액이 부족하면 배우자 명의 계좌로 넣는 것도 방법입니다.</li>
+        <li>연금저축·IRP는 계좌 주인만 공제받습니다. 내 공제 가능한 세금이 부족하면 배우자 명의 계좌로 넣는 것도 방법입니다.</li>
       </ul>
       <h2>주의할 점</h2>
       <ul>
@@ -143,7 +148,7 @@ tags: 세금, 직장인, 연금, 육아휴직
         <li>사업자 배우자는 표준세액공제 7만 원만 반영했습니다. 성실사업자·기장 공제 등은 세무사 확인이 필요합니다.</li>
       </ul>
       <h2>계산 기준</h2>
-      <p>2026년 귀속 소득세법 기준(세율표, 근로소득공제, 근로소득세액공제 한도, 자녀세액공제 25·30·40만 원, 연금계좌 16.5%/13.2%, 신용카드 공제 한도 자녀 추가분)과 2026년 4대보험 요율(국민연금 4.75%, 건강보험 3.595%, 장기요양 0.4724%, 고용보험 0.9%, 근로자 부담)을 반영했습니다. 기준일: 2026년 9월. 연말 세법 개정이 확정되면 수정합니다.</p>
+      <p>2026년 귀속 소득세법 기준(세율표, 근로소득공제, 근로소득세액공제 한도, 자녀세액공제 25·30·40만 원, 연금계좌 16.5%/13.2%(연금저축 단독 600만 원, 연금저축+IRP 합산 900만 원 한도), 신용카드 공제 한도 자녀 추가분)과 2026년 4대보험 요율(국민연금 4.75%, 건강보험 3.595%, 장기요양 0.4724%, 고용보험 0.9%, 근로자 부담)을 반영했습니다. 기준일: 2026년 9월. 연말 세법 개정이 확정되면 수정합니다.</p>
     </article>
   </main>
 
@@ -166,9 +171,9 @@ tags: 세금, 직장인, 연금, 육아휴직
     taxTable: [[14e6, 0.06, 0], [50e6, 0.15, 1.26e6], [88e6, 0.24, 5.76e6], [150e6, 0.35, 15.44e6], [300e6, 0.38, 19.94e6], [500e6, 0.40, 25.94e6], [1e9, 0.42, 35.94e6], [Infinity, 0.45, 65.94e6]], // [상한, 세율, 누진공제]
     personal: 1.5e6, senior: 1e6,
     earnedCredit: { base: 1.3e6, r1: 0.55, r2: 0.30 },
-    child: [0, 250000, 550000], childExtra: 400000,   // 8세 이상 1명·2명, 3명째부터 1명당
+    child: [0, 250000, 550000], childExtra: 400000,   // 9세 이상(2026 귀속) 1명·2명, 3명째부터 1명당
     birth: [0, 300000, 500000, 700000],
-    pension: { max: 9e6, lowRate: 0.15, highRate: 0.12, lowSalary: 55e6 }, // 국세 기준 (지방세 포함 16.5%/13.2%)
+    pension: { max: 9e6, savingMax: 6e6, lowRate: 0.15, highRate: 0.12, lowSalary: 55e6 }, // 국세 기준 (지방세 포함 16.5%/13.2%)
     card: { threshold: 0.25, credit: 0.15, debit: 0.30, cut: 70e6,
             limitLow: [3e6, 3.5e6, 4e6], limitHigh: [2.5e6, 2.75e6, 3e6] }, // 자녀 0·1·2명 이상
     social: { nps: 0.0475, health: 0.03595, care: 0.004724, emp: 0.009 },
@@ -207,7 +212,7 @@ tags: 세금, 직장인, 연금, 육아휴직
   }
   function socialAuto(g) { const s = RATES.social; return { nps: g * s.nps, other: g * (s.health + s.care + s.emp) }; }
 
-  // 직장인 1명의 세금 계산. p: {g, kids, kids8, birth, parents, parents70, spouseDed, credit, debit, pension, ins, med, edu, social}
+  // 직장인 1명의 세금 계산. p: {g, kids, kids8, birth, parents, parents70, spouseDed, credit, debit, pensionSav, pensionIrp, ins, med, edu, social}
   function worker(p) {
     const g = p.g;
     const people = 1 + (p.spouseDed ? 1 : 0) + p.kids + p.parents;
@@ -216,7 +221,7 @@ tags: 세금, 직장인, 연금, 육아휴직
     const eded = earnedDeduction(g);
     const card = cardDeduction(g, p.credit || 0, p.debit || 0, p.kids);
     const pRate = g <= RATES.pension.lowSalary ? RATES.pension.lowRate : RATES.pension.highRate;
-    const pensionIn = Math.min(p.pension || 0, RATES.pension.max);
+    const pensionIn = Math.min(Math.min(p.pensionSav || 0, RATES.pension.savingMax) + (p.pensionIrp || 0), RATES.pension.max);
     const child = childCredit(p.kids8, p.birth);
     const specialCredit = Math.min(p.ins || 0, RATES.ins.max) * RATES.ins.rate
       + Math.min(RATES.med.max, Math.max(0, (p.med || 0) - g * RATES.med.floor)) * RATES.med.rate
@@ -249,7 +254,7 @@ tags: 세금, 직장인, 연금, 육아휴직
   function solve(inp) {
     const fam = { kids: inp.kids, kids8: Math.min(inp.kids8, inp.kids), birth: inp.birth, parents: inp.parents, parents70: Math.min(inp.parents70, inp.parents) };
     const none = { kids: 0, kids8: 0, birth: 0, parents: 0, parents70: 0 };
-    const mine = { g: inp.salary, spouseDed: inp.spouseType === 'dep', credit: inp.credit, debit: inp.debit, pension: inp.pension, ins: inp.ins, med: inp.med, edu: inp.edu, social: inp.social };
+    const mine = { g: inp.salary, spouseDed: inp.spouseType === 'dep', credit: inp.credit, debit: inp.debit, pensionSav: inp.pensionSav, pensionIrp: inp.pensionIrp, ins: inp.ins, med: inp.med, edu: inp.edu, social: inp.social };
 
     // 조합: 아이 / 부모 각각 나 or 배우자
     const combos = [];
@@ -263,7 +268,7 @@ tags: 세금, 직장인, 연금, 육아휴직
                    parents: fam.parents - my.parents, parents70: fam.parents70 - my.parents70 };
       const me = worker(Object.assign({}, mine, my));
       let spouse = null;
-      if (inp.spouseType === 'worker') spouse = worker(Object.assign({ g: inp.spSalary, credit: 0, debit: 0, pension: 0 }, sp));
+      if (inp.spouseType === 'worker') spouse = worker(Object.assign({ g: inp.spSalary, credit: 0, debit: 0, pensionSav: 0, pensionIrp: 0 }, sp));
       if (inp.spouseType === 'biz') spouse = bizSpouse(inp.spBase + (inp.spBaseHadKids ? fam.kids * RATES.personal : 0), sp.kids, sp.kids8, sp.birth, sp.parents, sp.parents70);
       const total = me.decided + (spouse ? spouse.decided : 0);
       combos.push({ k, pa, me, spouse, total });
@@ -314,7 +319,7 @@ tags: 세금, 직장인, 연금, 육아휴직
       salary: man('salary') || 0, months: Math.min(12, Math.max(1, num('months'))), prepaid: man('prepaid'),
       kids: num('kids'), kids8: num('kids8'), birth: num('birth'), parents: num('parents'), parents70: num('parents70'),
       spouseType: $('spouseType').value, spSalary: man('spSalary') || 0, spBase: man('spBase') || 0, spBaseHadKids: $('spBaseHadKids').checked,
-      credit: man('credit') || 0, debit: man('debit') || 0, pension: man('pension') || 0,
+      credit: man('credit') || 0, debit: man('debit') || 0, pensionSav: man('pensionSav') || 0, pensionIrp: man('pensionIrp') || 0,
       ins: man('ins') || 0, med: man('med') || 0, edu: man('edu') || 0, social: man('social'),
     };
     const r = solve(inp), me = r.best.me;
@@ -346,7 +351,7 @@ tags: 세금, 직장인, 연금, 육아휴직
       row('자녀·출산 세액공제', '−' + won(me.child)),
       row(me.useSpecial ? '보험·의료·교육비 세액공제' : '표준세액공제 (더 유리)', '−' + won(me.other)),
       row(`연금계좌 세액공제 (${me.pRate === 0.15 ? '16.5%' : '13.2%'})`, '−' + won(me.pensionUsed)),
-      `<div class="row border-t border-slate-800 pt-2"><span class="text-slate-200 font-semibold">결정세액 (지방세 포함)</span><b class="text-amber-300">${won(L(me.decided))}</b></div>`,
+      `<div class="row border-t border-slate-800 pt-2"><span class="text-slate-200 font-semibold">결정세액 (지방세 포함)<span class="block text-[11px] text-slate-400 font-normal">모든 공제 반영 후</span></span><b class="text-amber-300">${won(L(me.decided))}</b></div>`,
       row('기납부세액 (지방세 포함)', won(L(r.prepaid))),
     ].join('');
 
@@ -367,6 +372,7 @@ tags: 세금, 직장인, 연금, 육아휴직
     if (r.wasted > 1000) tip('bg-rose-500/10 border border-rose-500/30 text-rose-200', `🚫 <b>연금계좌 세액공제 ${won(L(r.wasted))}이 헛방입니다.</b> 낼 세금이 부족해서 다 못 돌려받아요. 올해 환급에 도움이 되는 납입액은 약 <b>${manwon(r.usefulPension)}</b>까지입니다. 남는 금액은 내년 납입으로 돌리거나${inp.spouseType === 'biz' || inp.spouseType === 'worker' ? ' 배우자 명의 연금계좌로 넣는 걸' : ''} 검토하세요.`);
     else if (r.room > 10000) tip('bg-emerald-500/10 border border-emerald-500/30 text-emerald-200', `💡 12월 31일까지 IRP·연금저축에 <b>${manwon(r.room)}</b> 더 넣으면 약 <b>${won(L(r.room * me.pRate))}</b> 더 돌려받습니다.`);
     else if (me.pensionIn > 0) tip('bg-slate-700/40 border border-slate-600 text-slate-200', '👍 연금계좌 납입액이 낼 세금에 딱 맞거나 한도에 도달했습니다.');
+    if (inp.pensionSav > RATES.pension.savingMax) tip('bg-amber-500/10 border border-amber-500/30 text-amber-200', `⚠️ 연금저축은 단독으로 <b>${manwon(RATES.pension.savingMax)}</b>까지만 공제 대상이라, 초과분 ${manwon(inp.pensionSav - RATES.pension.savingMax)}은 계산에서 뺐습니다. IRP에 넣으면 합산 900만 원까지 공제됩니다.`);
     if (me.pRate === 0.15 && inp.salary > 0) tip('bg-slate-700/40 border border-slate-600 text-slate-200', '📉 올해 총급여가 5,500만 원 이하라 연금계좌 공제율이 <b>16.5%</b>(높은 구간)로 적용됩니다.');
     const th = inp.salary * RATES.card.threshold;
     if (inp.credit + inp.debit < th) tip('bg-slate-700/40 border border-slate-600 text-slate-200', `💳 카드 사용액이 공제 문턱(총급여의 25% = ${manwon(th)})에 못 미칩니다. 가족 카드 사용분을 합칠 수 있는지 확인해보세요.`);
