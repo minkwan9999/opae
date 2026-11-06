@@ -259,6 +259,7 @@ def breadcrumb(crumbs):
 
 
 NEW_DAYS = 14  # 공개 후 이 일수 이내의 글에 NEW 배지를 붙인다
+NEW_BADGE = ' <span class="ml-1 align-middle rounded bg-emerald-600/25 border border-emerald-500/40 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">NEW</span>'
 
 
 def guide_meta(g):
@@ -269,7 +270,7 @@ def guide_meta(g):
         return "", ""
     badge = ""
     if 0 <= (datetime.date.fromisoformat(TODAY) - d).days <= NEW_DAYS:
-        badge = ' <span class="ml-1 align-middle rounded bg-emerald-600/25 border border-emerald-500/40 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">NEW</span>'
+        badge = NEW_BADGE
     return d.isoformat(), badge
 
 
@@ -381,7 +382,7 @@ def build():
             lastmods[hp] = max(x.get("date", "") for x in gs)
         sections.append(f"""    <details name="cat" id="{slug}" data-slug="{slug}" class="guide-cat mt-3 rounded-xl border border-slate-700 bg-slate-900/40" data-per="{PER_PAGE}">
       <summary class="cursor-pointer select-none p-3 flex items-center justify-between gap-2">
-        <span><span class="text-base font-extrabold text-white">{html.escape(name)}</span> <span class="text-xs font-normal text-slate-500">{len(gs)}편</span><span class="block text-xs text-slate-400 mt-0.5">{html.escape(intro)}</span></span>
+        <span><span class="text-base font-extrabold text-white">{html.escape(name)}</span> <span class="text-xs font-normal text-slate-500">{len(gs)}편</span>{NEW_BADGE if any(guide_meta(g)[1] for g in gs) else ''}<span class="block text-xs text-slate-400 mt-0.5">{html.escape(intro)}</span></span>
         <span class="text-slate-500 text-xs shrink-0 caret">▼</span>
       </summary>
       <div class="px-3 pb-3">
