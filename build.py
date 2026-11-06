@@ -258,9 +258,26 @@ def breadcrumb(crumbs):
     return " › ".join(parts), '<script type="application/ld+json">' + json.dumps(ld, ensure_ascii=False) + "</script>"
 
 
+NEW_DAYS = 14  # 공개 후 이 일수 이내의 글에 NEW 배지를 붙인다
+
+
+def guide_meta(g):
+    """(날짜 문자열, NEW 배지 HTML). 날짜가 없거나 형식이 틀리면 ('', '')."""
+    try:
+        d = datetime.date.fromisoformat(g.get("date", ""))
+    except ValueError:
+        return "", ""
+    badge = ""
+    if 0 <= (datetime.date.fromisoformat(TODAY) - d).days <= NEW_DAYS:
+        badge = ' <span class="ml-1 align-middle rounded bg-emerald-600/25 border border-emerald-500/40 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">NEW</span>'
+    return d.isoformat(), badge
+
+
 def guide_li(g):
     p = f"/guide/{g['slug']}/"
-    return f'<li class="py-2 border-b border-slate-700"><a href="{p}" class="text-sm font-bold text-white hover:text-blue-400">{html.escape(g["title"])}</a><p class="text-xs text-slate-400">{html.escape(g.get("description", ""))}</p></li>'
+    ds, badge = guide_meta(g)
+    date_html = f'<time datetime="{ds}" class="block text-[11px] text-slate-500">{ds}</time>' if ds else ""
+    return f'<li class="py-2 border-b border-slate-700"><a href="{p}" class="text-sm font-bold text-white hover:text-blue-400">{html.escape(g["title"])}</a>{badge}{date_html}<p class="text-xs text-slate-400">{html.escape(g.get("description", ""))}</p></li>'
 
 
 def category_list_html(guides):
@@ -299,7 +316,7 @@ def build():
         path = "/" if slug == "index" else f"/{slug}/"
         cards = "\n".join(card(f"/{s}/", i, n, d) for s, i, n, d in CALCULATORS)
         glist = "\n".join(
-            f'<li><a href="/guide/{g["slug"]}/" class="hover:text-blue-400">{html.escape(g["title"])}</a></li>'
+            f'<li><a href="/guide/{g["slug"]}/" class="hover:text-blue-400">{html.escape(g["title"])}</a>{guide_meta(g)[1]}</li>'
             for g in guides[:5]) or '<li class="text-slate-500">가이드 글 준비 중입니다.</li>'
         body = (body.replace("{{CALCULATOR_CARDS}}", cards)
                     .replace("{{GUIDE_LIST}}", glist)
