@@ -8,9 +8,13 @@ src/*.html + guides.md + CHANGELOG.md  ->  _site/ (배포용)
 """
 import datetime
 import html
+import json
 import os
 import re
 import shutil
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
 
 import markdown
 
@@ -69,6 +73,149 @@ CALC_INFO = {
     "isa": ("2026년 9월", [("조세특례제한법", LAW + "조세특례제한법"), ("국세청", "https://www.nts.go.kr")]),
     "lotto-tax": ("2026년 9월", [("소득세법", LAW + "소득세법"), ("국세청", "https://www.nts.go.kr")]),
 }
+
+# ── 환율 (관세청 관세환율 API, 빌드 때 1회 조회) ──────────────
+# 키는 환경변수 DATA_GO_KR_KEY 로만 받는다. 로그·예외 출력에 URL/키를 넣지 않는다.
+FX_API = "https://apis.data.go.kr/1220000/retrieveTrifFxrtInfo"
+FX_FILE = os.path.join(ROOT, "data", "fx.json")
+FX_SITE_URL = f"{SITE_URL}/fx.json"  # 직전 배포본의 환율 사본 (CI는 data/ 가 남지 않아 이쪽으로 이어받는다)
+FX_FIXED = {"usd": 1350.0, "jpy": 9.0}  # 고정 참고값 (jpy = 1엔당 원)
+FX_USD_RANGE = (900, 2500)
+FX_JPY_RANGE = (5, 20)  # 1엔당 원
+
+
+def _num(text):
+    return float(str(text).replace(",", "").strip())
+
+
+def parse_fx_xml(xml_text):
+    """관세청 XML -> (usd, jpy_per_1yen, applyDate 'YYYY-MM-DD'). 결과 없으면 None. 형식 오류는 ValueError."""
+    root = ET.fromstring(xml_text)
+    code = (root.findtext(".//resultCode") or "").strip()
+    if code and code not in ("00", "0", "000"):
+        # 데이터 없음 계열은 '결과 없음'으로 보고 이전 날짜를 계속 시도
+        if code in ("03", "3", "NODATA"):
+            return None
+        raise ValueError(f"API resultCode {code}")
+    usd = jpy = None
+    apply = ""
+    for it in root.iter("item"):
+        sgn = (it.findtext("currSgn") or "").strip().upper()
+        if "수출" in (it.findtext("imexTp") or ""):
+            continue
+        if sgn == "USD" and usd is None:
+            usd = _num(it.findtext("fxrt"))
+            apply = apply or (it.findtext("aplyBgnDt") or "").strip()
+        elif sgn == "JPY" and jpy is None:
+            v = _num(it.findtext("fxrt"))
+            unit = it.findtext("mtryUtNm") or ""
+            # JPY는 통상 100엔 기준(예: 900원대)으로 고시된다. 단위명에 '100'이 있거나
+            # 값이 50 초과면 100엔 기준으로 보고 /100, 아니면 1엔 기준으로 본다(5~20 대).
+            jpy = v / 100 if ("100" in unit or v > 50) else v
+            apply = apply or (it.findtext("aplyBgnDt") or "").strip()
+    if usd is None and jpy is None:
+        return None
+    if usd is None or jpy is None:
+        raise ValueError("USD/JPY 중 하나 없음")
+    if not (FX_USD_RANGE[0] <= usd <= FX_USD_RANGE[1] and FX_JPY_RANGE[0] <= jpy <= FX_JPY_RANGE[1]):
+        raise ValueError("환율 범위 이탈")
+    if len(apply) == 8 and apply.isdigit():
+        apply = f"{apply[:4]}-{apply[4:6]}-{apply[6:]}"
+    return round(usd, 2), round(jpy, 4), apply
+
+
+def fetch_fx(key, today=None, fetch=None):
+    """오늘(KST)부터 14일 전까지 날짜를 바꿔 가며 결과가 있는 첫 응답을 파싱한다."""
+    today = today or datetime.date.fromisoformat(TODAY)
+    k = urllib.parse.quote(urllib.parse.unquote(key), safe="")  # 인코딩/디코딩 키 모두 허용
+
+    def http(day):
+        url = f"{FX_API}?serviceKey={k}&aplyBgnDt={day:%Y%m%d}&weekFxrtTpcd=2"
+        with urllib.request.urlopen(url, timeout=10) as r:
+            return r.read().decode("utf-8")
+
+    for back in range(15):
+        res = parse_fx_xml((fetch or http)(today - datetime.timedelta(days=back)))
+        if res:
+            return res
+    return None
+
+
+def _valid_cache(d):
+    """필드 존재·숫자·범위 검사. 통과하면 정리된 dict, 아니면 None."""
+    try:
+        usd, jpy = d["usd"], d["jpy"]
+        if isinstance(usd, bool) or isinstance(jpy, bool) or not isinstance(usd, (int, float)) or not isinstance(jpy, (int, float)):
+            return None
+        if not (FX_USD_RANGE[0] <= usd <= FX_USD_RANGE[1] and FX_JPY_RANGE[0] <= jpy <= FX_JPY_RANGE[1]):
+            return None
+        return {"usd": usd, "jpy": jpy, "applyDate": str(d.get("applyDate") or ""), "fetchedAt": str(d.get("fetchedAt") or "")}
+    except (KeyError, TypeError, AttributeError):
+        return None
+
+
+def _http_site_fx():
+    with urllib.request.urlopen(FX_SITE_URL, timeout=10) as r:
+        return r.read().decode("utf-8")
+
+
+def get_fx(fetch=None, fx_file=None, site_fetch=None):
+    """{'usd','jpy','applyDate','fetchedAt','source'(api|site|cache|fixed)}.
+    순서: API -> 배포 사이트 fx.json -> 로컬 data/fx.json -> 고정값. 실패는 모두 다음 단계로, URL·예외 메시지는 출력하지 않는다."""
+    fx_file = fx_file or FX_FILE
+    key = os.environ.get("DATA_GO_KR_KEY", "").strip()
+    if key or fetch:
+        try:
+            res = fetch_fx(key, fetch=fetch)
+            if res:
+                usd, jpy, apply = res
+                fetched = (datetime.datetime.utcnow() + datetime.timedelta(hours=9)).strftime("%Y-%m-%dT%H:%M:%S+09:00")
+                os.makedirs(os.path.dirname(fx_file), exist_ok=True)
+                with open(fx_file, "w", encoding="utf-8") as f:
+                    json.dump({"usd": usd, "jpy": jpy, "applyDate": apply, "fetchedAt": fetched}, f, ensure_ascii=False, indent=2)
+                print(f"fx: API 사용 USD={usd} JPY(1엔)={jpy} 적용개시일={apply}")
+                return {"usd": usd, "jpy": jpy, "applyDate": apply, "fetchedAt": fetched, "source": "api"}
+            print("fx: API 결과 없음(최근 14일)")
+        except Exception as e:  # 메시지에 키가 섞일 수 있어 클래스명만 출력
+            print(f"fx: API 실패({type(e).__name__})")
+    else:
+        print("fx: 키 없음")
+    try:
+        d = _valid_cache(json.loads((site_fetch or _http_site_fx)()))
+        if d:
+            print(f"fx: 사이트 직전값 사용 USD={d['usd']} JPY(1엔)={d['jpy']} 적용개시일={d['applyDate']} 수집일시={d['fetchedAt']}")
+            return {**d, "source": "site"}
+        print("fx: 사이트 직전값 형식·범위 부적합")
+    except Exception as e:
+        print(f"fx: 사이트 직전값 실패({type(e).__name__})")
+    try:
+        with open(fx_file, encoding="utf-8") as f:
+            d = _valid_cache(json.load(f))
+        if d:
+            print(f"fx: 로컬 직전값 사용 USD={d['usd']} JPY(1엔)={d['jpy']} 적용개시일={d['applyDate']} 수집일시={d['fetchedAt']}")
+            return {**d, "source": "cache"}
+        print("fx: 로컬 직전값 형식·범위 부적합")
+    except Exception as e:
+        print(f"fx: 로컬 직전값 실패({type(e).__name__})")
+    print(f"fx: 고정 참고값 USD={FX_FIXED['usd']} JPY(1엔)={FX_FIXED['jpy']}")
+    return {**FX_FIXED, "applyDate": "", "fetchedAt": "", "source": "fixed"}
+
+
+def fx_placeholders(fx):
+    usd, jpy100 = fx["usd"], round(fx["jpy"] * 100, 2)
+    u, j = f"{usd:,.2f}".rstrip("0").rstrip("."), f"{jpy100:,.2f}".rstrip("0").rstrip(".")
+    apply = fx.get("applyDate") or ""
+    fetched = (fx.get("fetchedAt") or "")[:10]
+    tail = (f" · 적용개시일 {apply}" if apply else "")
+    if fx["source"] == "api":
+        text = f"관세청 고시 환율(수입 과세환율, 참고값) 1달러={u}원, 100엔={j}원{tail}"
+    elif fx["source"] in ("site", "cache"):
+        text = f"직전에 가져온 관세청 고시 환율(자동 갱신 실패, 참고값) 1달러={u}원, 100엔={j}원{tail}" + (f" · 수집일 {fetched}" if fetched else "")
+    else:
+        text = f"고정 참고값(자동 갱신 실패) 1달러={u}원, 100엔={j}원"
+    raw = lambda v: f"{v:.2f}".rstrip("0").rstrip(".")
+    return {"{{FX_DISPLAY}}": html.escape(text), "{{FX_USD}}": raw(usd), "{{FX_JPY100}}": raw(jpy100)}
+# ────────────────────────────────────────────────────
 
 
 def info_html(slug):
@@ -295,12 +442,20 @@ def md(text):
     return markdown.markdown(text, extensions=["tables"])
 
 
+FX_FETCH = FX_FILE_OVERRIDE = FX_SITE_FETCH = None  # 테스트에서 주입
+
+
 def build():
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
     urls = []
     lastmods = {}  # 주소 → 수정일. 고정 페이지는 넣지 않아 lastmod를 생략한다
     guides = load_guides()
+    fx = get_fx(fetch=FX_FETCH, fx_file=FX_FILE_OVERRIDE, site_fetch=FX_SITE_FETCH)
+    fx_ph = fx_placeholders(fx)
+    if fx["source"] != "fixed":  # 고정값이면 쓰지 않아 가짜 날짜가 이어지지 않게 한다. 키·URL은 넣지 않는다
+        write("fx.json", json.dumps({k: fx[k] for k in ("usd", "jpy", "applyDate", "fetchedAt")}, ensure_ascii=False, indent=2) + "\n")
+        print("fx: _site/fx.json 기록")
 
     # 0) static/ 폴더(로고·아이콘·공유 이미지)는 그대로 복사
     static = os.path.join(ROOT, "static")
@@ -323,6 +478,8 @@ def build():
                     .replace("{{GUIDE_LIST}}", glist)
                     .replace("{{CATEGORY_LIST}}", category_list_html(guides))
                     .replace("{{CONTACT_FORM_URL}}", CONTACT_FORM_URL))
+        for ph, val in fx_ph.items():
+            body = body.replace(ph, val)
         if slug == "contact" and not CONTACT_FORM_URL:
             body = re.sub(r"<!--FORM-->.*?<!--/FORM-->", '<p class="text-sm text-slate-400">문의 양식을 준비 중입니다.</p>', body, flags=re.S)
         body += info_html(slug)

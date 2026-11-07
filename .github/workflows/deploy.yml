@@ -29,6 +29,8 @@ jobs:
           python-version: "3.12"
       - run: pip install markdown
       - run: python build.py
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
