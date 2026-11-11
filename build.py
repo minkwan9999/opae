@@ -76,7 +76,7 @@ CALC_INFO = {
 
 # ── 환율 (관세청 관세환율 API, 빌드 때 1회 조회) ──────────────
 # 키는 환경변수 DATA_GO_KR_KEY 로만 받는다. 로그·예외 출력에 URL/키를 넣지 않는다.
-FX_API = "https://apis.data.go.kr/1220000/retrieveTrifFxrtInfo"
+FX_API = "https://apis.data.go.kr/1220000/retrieveTrifFxrtInfo/getRetrieveTrifFxrtInfo"
 FX_FILE = os.path.join(ROOT, "data", "fx.json")
 FX_SITE_URL = f"{SITE_URL}/fx.json"  # 직전 배포본의 환율 사본 (CI는 data/ 가 남지 않아 이쪽으로 이어받는다)
 FX_FIXED = {"usd": 1350.0, "jpy": 9.0}  # 고정 참고값 (jpy = 1엔당 원)
@@ -154,6 +154,21 @@ def _valid_cache(d):
         return None
 
 
+def _http_detail(e):
+    """HTTPError면 ' HTTP 403 코드 30' 형태(숫자만). 본문 전체·URL은 출력하지 않는다."""
+    code = getattr(e, "code", None)
+    if not isinstance(code, int):
+        return ""
+    out = f" HTTP {code}"
+    try:
+        m = re.search(r"<(?:returnReasonCode|resultCode)>\s*(\d{1,4})\s*<", e.read(4000).decode("utf-8", "ignore"))
+        if m:
+            out += f" 코드 {m.group(1)}"
+    except Exception:
+        pass
+    return out
+
+
 def _http_site_fx():
     with urllib.request.urlopen(FX_SITE_URL, timeout=10) as r:
         return r.read().decode("utf-8")
@@ -176,8 +191,8 @@ def get_fx(fetch=None, fx_file=None, site_fetch=None):
                 print(f"fx: API 사용 USD={usd} JPY(1엔)={jpy} 적용개시일={apply}")
                 return {"usd": usd, "jpy": jpy, "applyDate": apply, "fetchedAt": fetched, "source": "api"}
             print("fx: API 결과 없음(최근 14일)")
-        except Exception as e:  # 메시지에 키가 섞일 수 있어 클래스명만 출력
-            print(f"fx: API 실패({type(e).__name__})")
+        except Exception as e:  # 메시지에 키가 섞일 수 있어 클래스명·HTTP 상태·오류코드 숫자만 출력
+            print(f"fx: API 실패({type(e).__name__}{_http_detail(e)})")
     else:
         print("fx: 키 없음")
     try:
