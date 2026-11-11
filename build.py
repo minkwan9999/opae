@@ -223,9 +223,9 @@ def fx_placeholders(fx):
     fetched = (fx.get("fetchedAt") or "")[:10]
     tail = (f" · 적용개시일 {apply}" if apply else "")
     if fx["source"] == "api":
-        text = f"관세청 고시 환율(수입 과세환율, 참고값) 1달러={u}원, 100엔={j}원{tail}"
+        text = f"관세청 고시 환율(주 단위 고시, 참고값) 1달러={u}원, 100엔={j}원{tail}"
     elif fx["source"] in ("site", "cache"):
-        text = f"직전에 가져온 관세청 고시 환율(자동 갱신 실패, 참고값) 1달러={u}원, 100엔={j}원{tail}" + (f" · 수집일 {fetched}" if fetched else "")
+        text = f"직전에 가져온 관세청 고시 환율(주 단위 고시, 자동 갱신 실패, 참고값) 1달러={u}원, 100엔={j}원{tail}" + (f" · 수집일 {fetched}" if fetched else "")
     else:
         text = f"고정 참고값(자동 갱신 실패) 1달러={u}원, 100엔={j}원"
     raw = lambda v: f"{v:.2f}".rstrip("0").rstrip(".")
